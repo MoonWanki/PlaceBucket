@@ -30,8 +30,8 @@ public class LoginActivity extends AppCompatActivity {
 
         // 이미 로그인 돼 있는 상태면 바로 메인액티비티로
         if(AccessToken.getCurrentAccessToken()!=null) {
-            Toast.makeText(getApplicationContext(), "자동 로그인.", Toast.LENGTH_SHORT).show();
-            toastLoginInfo();
+            // Toast.makeText(getApplicationContext(), "자동 로그인.", Toast.LENGTH_SHORT).show();
+            // toastLoginInfo();
             startMainActivity();
         }
 
@@ -39,7 +39,7 @@ public class LoginActivity extends AppCompatActivity {
                 new FacebookCallback<LoginResult>() {
                     @Override
                     public void onSuccess(LoginResult loginResult) {
-                        toastLoginInfo();
+                        // toastLoginInfo();
                         startMainActivity();
                     }
 
