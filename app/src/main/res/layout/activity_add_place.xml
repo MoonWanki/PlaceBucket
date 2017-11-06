@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:context="com.app_project.placebucket.AddBucketActivity">
+    tools:context="com.app_project.placebucket.AddPlaceActivity">
 
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
@@ -17,19 +17,17 @@
             android:layout_height="?attr/actionBarSize"
             android:background="@color/colorPrimary"
             app:popupTheme="@style/AppTheme.PopupOverlay">
-
             <ImageView
-                android:id="@+id/back_button"
+                android:id="@+id/back_button_2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:src="?attr/actionModeCloseDrawable" />
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="30dp"
-                android:text="버킷 추가"
                 android:textColor="#FFFFFF"
+                android:text="장소 추가"
                 android:textSize="21dp"
                 />
         </android.support.v7.widget.Toolbar>
@@ -37,12 +35,13 @@
     </android.support.design.widget.AppBarLayout>
 
     <TextView
-        android:id="@+id/selectFriendsText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true"
         android:gravity="center"
-        android:text="여기에 친구 목록이 나옵니다.\n\n버킷에 참여시킬 친구들을 선택할 수 있습니다." />
+        android:text="여기서 장소를 검색 및 추가합니다.\n\n장소 정보는 Google Place API를 통해 제공됩니다."
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-</RelativeLayout>
+</android.support.constraint.ConstraintLayout>

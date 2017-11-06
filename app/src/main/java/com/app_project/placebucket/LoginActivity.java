@@ -15,8 +15,11 @@ import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 
+import java.util.Arrays;
+
 public class LoginActivity extends AppCompatActivity {
 
+    private final int REQUEST_CODE_MAIN = 100;
     CallbackManager callbackManager;
     LoginButton FBLoginButton;
 
@@ -26,6 +29,7 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
 
         FBLoginButton = (LoginButton) findViewById(R.id.fb_login_button);
+        FBLoginButton.setReadPermissions(Arrays.asList("user_friends"));
         callbackManager = CallbackManager.Factory.create();
 
         // 이미 로그인 돼 있는 상태면 바로 메인액티비티로
@@ -58,7 +62,7 @@ public class LoginActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         callbackManager.onActivityResult(requestCode, resultCode, data);
 
-        if(requestCode==101) {
+        if(requestCode==REQUEST_CODE_MAIN) {
             if(resultCode==RESULT_OK) {
                 String flag = data.getStringExtra("value");
                 if(flag.equals("exit"))
@@ -69,7 +73,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private void startMainActivity() {
         Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-        startActivityForResult(intent, 101);
+        startActivityForResult(intent, REQUEST_CODE_MAIN);
     }
 
     protected void toastLoginInfo() {

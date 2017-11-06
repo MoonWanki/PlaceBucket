@@ -6,11 +6,12 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ListView;
@@ -32,11 +33,11 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.jar.Attributes;
 
 public class MainActivity extends AppCompatActivity {
+
+    private final int REQUEST_CODE_BUCKET = 201;
+    private final int REQUEST_CODE_ADD_BUCKET = 202;
 
     private final long FINISH_INTERVAL_TIME = 1500;
     private long backPressedTime = 0;
@@ -50,32 +51,31 @@ public class MainActivity extends AppCompatActivity {
     // Progress Dialog
     private ProgressDialog pDialog;
 
-    JSONParser jParser = new JSONParser();
+    private JSONObject jsonObject;
+    private JSONArray jsonArray;
 
-    JSONObject jsonObject;
-    JSONArray jsonArray;
-
-    ArrayList<SingleBucket> bucketArray = new ArrayList<>();
+    private ArrayList<SingleBucket> bucketArray = new ArrayList<>();
 
     // url to get all products list
-    private static String url_get_buckets = "http://18.216.36.241/pb/get_bucket.php";
+    private static String url_get_bucket = "http://18.216.36.241/pb/get_bucket.php";
 
     // JSON Node names
-    private static final String TAG_SUCCESS = "success";
-    private static final String TAG_BUCKETS = "buckets";
-    private static final String TAG_BNO = "Bno";
-    private static final String TAG_BNAME = "Bname";
+    protected static final String TAG_SUCCESS = "success";
+
+    protected static final String TAG_BUCKETS = "buckets";
+    protected static final String TAG_BNO = "Bno";
+    protected static final String TAG_BNAME = "Bname";
+    protected static final String TAG_IMG = "img";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        plzAddBucket = (TextView) findViewById(R.id.PlzAddBucket);
-        logoutButton = (Button) findViewById(R.id.logoutButton);
-        floatingActionButton = (FloatingActionButton) findViewById(R.id.fab);
-
-        listView = (ListView) findViewById(R.id.list_bucket);
+        plzAddBucket = findViewById(R.id.plzAddBucket);
+        logoutButton = findViewById(R.id.logoutButton);
+        floatingActionButton = findViewById(R.id.fab_main);
+        listView = findViewById(R.id.list_bucket);
 
         /**
          * Profile.fetchProfileForCurrentAccessToken();
@@ -96,11 +96,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(getApplicationContext(), AddBucketActivity.class);
-                startActivityForResult(intent, 101);
+                startActivityForResult(intent, REQUEST_CODE_ADD_BUCKET);
             }
         });
 
-        new LoadAllBuckets().execute(url_get_buckets);
+        new LoadAllBuckets().execute(url_get_bucket);
 
     }
 
@@ -147,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
         protected void onPreExecute() {
             super.onPreExecute();
             pDialog = new ProgressDialog(MainActivity.this);
-            pDialog.setMessage("Loading buckets. Plz wait...");
+            pDialog.setMessage("버킷 목록을 불러오는 중입니다...");
             pDialog.setIndeterminate(false);
             pDialog.setCancelable(false);
             pDialog.show();
@@ -180,13 +180,11 @@ public class MainActivity extends AppCompatActivity {
 
         protected void onPostExecute(String result) {
             // dismiss the dialog after getting all products
-            pDialog.dismiss();
+
 
 
             try {
                 jsonObject = new JSONObject(result);
-
-                Toast.makeText(getApplicationContext(), result, Toast.LENGTH_LONG).show();
 
                 if(jsonObject.getInt(TAG_SUCCESS)==0) {
                     plzAddBucket.setText("버킷을 추가하세요.");
@@ -203,18 +201,34 @@ public class MainActivity extends AppCompatActivity {
 
                     SingleBucket b = new SingleBucket(bno, bname);
 
-                    if(i%4==0) b.setImgId(R.drawable.img1);
-                    else if(i%4==1) b.setImgId(R.drawable.img2);
-                    else if(i%4==2) b.setImgId(R.drawable.img3);
-                    else b.setImgId(R.drawable.img4);
-
                     bucketArray.add(b);
                 }
+
+                bucketArray.get(0).setImgId(R.drawable.img1);
+                bucketArray.get(1).setImgId(R.drawable.img2);
+                bucketArray.get(2).setImgId(R.drawable.img3);
+                bucketArray.get(3).setImgId(R.drawable.img4);
 
                 adapter = new BucketListAdapter();
                 adapter.setList(bucketArray);
 
+
+
                 listView.setAdapter(adapter);
+
+                pDialog.dismiss();
+
+                listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                        SingleBucket b = (SingleBucket) adapter.getItem(i);
+                        Intent intent = new Intent(getApplicationContext(), BucketActivity.class);
+                        intent.putExtra(TAG_BNO, b.getNo());
+                        intent.putExtra(TAG_BNAME, b.getName());
+                        intent.putExtra(TAG_IMG, b.getImgId());
+                        startActivityForResult(intent, REQUEST_CODE_BUCKET);
+                    }
+                });
 
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -251,7 +265,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if(requestCode==101) {
+        if(requestCode==REQUEST_CODE_BUCKET) {
 
         }
     }
