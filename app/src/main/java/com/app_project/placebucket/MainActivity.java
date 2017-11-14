@@ -57,6 +57,9 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<SingleBucket> bucketArray = new ArrayList<>();
 
     // url to get all products list
+    private static String url_get_user = "http://18.216.36.241/pb/get_user.php";
+    private static String url_add_user = "http://18.216.36.241/pb/add_user.php";
+
     private static String url_get_bucket = "http://18.216.36.241/pb/get_bucket.php";
 
     // JSON Node names
@@ -77,12 +80,9 @@ public class MainActivity extends AppCompatActivity {
         floatingActionButton = findViewById(R.id.fab_main);
         listView = findViewById(R.id.list_bucket);
 
-        /**
-         * Profile.fetchProfileForCurrentAccessToken();
-         * String name = Profile.getCurrentProfile().getName();
-         * Toast.makeText(getApplicationContext(), "이름: " + name, Toast.LENGTH_LONG).show();
-         * welcome.setText(currentProfile.getName().toString() + "님 환영합니다!");
-         * */
+        String name = Profile.getCurrentProfile().getName();
+        String id = Profile.getCurrentProfile().getId();
+        Toast.makeText(getApplicationContext(), "이름: " + name + "\nID: " + id, Toast.LENGTH_LONG).show();
 
         logoutButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -99,6 +99,8 @@ public class MainActivity extends AppCompatActivity {
                 startActivityForResult(intent, REQUEST_CODE_ADD_BUCKET);
             }
         });
+
+        // new GetUser().execute(url_get_user);
 
         new LoadAllBuckets().execute(url_get_bucket);
 
@@ -239,6 +241,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    class GetUser extends AsyncTask<String, Void, Void> {
+
+        @Override
+        protected Void doInBackground(String... strings) {
+            return null;
+        }
+    }
 
     protected void viewLogoutDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);

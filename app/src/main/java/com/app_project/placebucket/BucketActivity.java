@@ -1,5 +1,6 @@
 package com.app_project.placebucket;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Color;
@@ -24,8 +25,10 @@ import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 
 
@@ -33,7 +36,7 @@ public class BucketActivity extends AppCompatActivity {
 
     private final int REQUEST_CODE_ADD_PLACE = 301;
 
-    private static String url_get_place = "http://18.216.36.241/pb/get_place.php";
+    private String url_get_place = "http://18.216.36.241/pb/get_place.php";
 
     private static final String TAG_SUCCESS = "success";
     private static final String TAG_PLACES = "places";
@@ -69,7 +72,8 @@ public class BucketActivity extends AppCompatActivity {
         plzAddPlace = findViewById(R.id.plzAddPlace);
         listView = findViewById(R.id.list_place);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab_bucket);
+        FloatingActionButton fab = findViewById(R.id.fab_bucket);
+
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -90,11 +94,14 @@ public class BucketActivity extends AppCompatActivity {
         bucketNo = intent.getStringExtra(MainActivity.TAG_BNO);
         bucketName = intent.getStringExtra(MainActivity.TAG_BNAME);
 
+
         bucketImageView.setImageResource(intent.getIntExtra(MainActivity.TAG_IMG, 0));
         bucketImageView.setColorFilter(Color.parseColor("#BDBDBD"), PorterDuff.Mode.MULTIPLY);
 
         bucketNameTextView.setText(bucketName);
 
+        url_get_place += "?bno=" + bucketNo;
+        Toast.makeText(getApplicationContext(), url_get_place, Toast.LENGTH_LONG).show();
         new LoadAllPlaces().execute(url_get_place);
 
     }
@@ -156,8 +163,17 @@ public class BucketActivity extends AppCompatActivity {
             try {
                 URL url = new URL(uri);
                 HttpURLConnection con = (HttpURLConnection) url.openConnection();
+                con.setDoInput(true);
+                con.setDoOutput(true);
                 StringBuilder sb = new StringBuilder();
 
+                /**
+                String data  = URLEncoder.encode("bno", "UTF-8")
+                        + "=" + URLEncoder.encode(bucketNo, "UTF-8");
+
+                OutputStreamWriter outputStreamWriter = new OutputStreamWriter(con.getOutputStream(), "UTF8");
+                outputStreamWriter.write(data);
+                 */
                 bufferedReader = new BufferedReader(new InputStreamReader(con.getInputStream()));
                 String json;
                 while((json=bufferedReader.readLine())!=null) {
@@ -175,13 +191,14 @@ public class BucketActivity extends AppCompatActivity {
         protected void onPostExecute(String result) {
             // dismiss the dialog after getting all products
 
-
+            pDialog.dismiss();
 
             try {
                 jsonObject = new JSONObject(result);
 
                 if(jsonObject.getInt(TAG_SUCCESS)==0) {
                     plzAddPlace.setText("장소를 추가하세요.");
+                    Toast.makeText(getApplicationContext(), jsonObject.getString("message"),Toast.LENGTH_LONG).show();
                     return;
                 }
 
@@ -196,21 +213,20 @@ public class BucketActivity extends AppCompatActivity {
                     SinglePlace p = new SinglePlace(pId, pName);
 
                     placeArray.add(p);
+
+                    placeArray.get(i).setImgId(R.drawable.p701);
                 }
 
-                placeArray.get(0).setImgId(R.drawable.p701);
-                placeArray.get(1).setImgId(R.drawable.p702);
-                placeArray.get(2).setImgId(R.drawable.p703);
-                placeArray.get(3).setImgId(R.drawable.p704);
-                placeArray.get(4).setImgId(R.drawable.p705);
-
+                // placeArray.get(0).setImgId(R.drawable.p701);
+                // placeArray.get(1).setImgId(R.drawable.p702);
+                // placeArray.get(2).setImgId(R.drawable.p703);
+                // placeArray.get(3).setImgId(R.drawable.p704);
+                // placeArray.get(4).setImgId(R.drawable.p705);
 
                 adapter = new PlaceListAdapter();
                 adapter.setList(placeArray);
 
                 listView.setAdapter(adapter);
-
-                pDialog.dismiss();
 
                 listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
@@ -227,6 +243,13 @@ public class BucketActivity extends AppCompatActivity {
 
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
-
+        if(requestCode == REQUEST_CODE_ADD_PLACE && resultCode == Activity.RESULT_OK) {
+            new LoadAllPlaces().execute(url_get_place);
+        } else {
+            super.onActivityResult(requestCode, resultCode, data);
+        }
+    }
 }

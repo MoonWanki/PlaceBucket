@@ -22,39 +22,74 @@ public class LoginActivity extends AppCompatActivity {
     private final int REQUEST_CODE_MAIN = 100;
     CallbackManager callbackManager;
     LoginButton FBLoginButton;
+    Profile profile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        FBLoginButton = (LoginButton) findViewById(R.id.fb_login_button);
+        FBLoginButton = findViewById(R.id.fb_login_button);
         FBLoginButton.setReadPermissions(Arrays.asList("user_friends"));
         callbackManager = CallbackManager.Factory.create();
 
+
         // 이미 로그인 돼 있는 상태면 바로 메인액티비티로
-        if(AccessToken.getCurrentAccessToken()!=null) {
-            // Toast.makeText(getApplicationContext(), "자동 로그인.", Toast.LENGTH_SHORT).show();
-            // toastLoginInfo();
-            startMainActivity();
+        if(Profile.getCurrentProfile()!=null) {
+            Toast.makeText(getApplicationContext(), "세션 있음", Toast.LENGTH_SHORT).show();
+
+            Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+            startActivityForResult(intent, REQUEST_CODE_MAIN);
         }
 
-        LoginManager.getInstance().registerCallback(callbackManager,
-                new FacebookCallback<LoginResult>() {
+        /**
+        ProfileTracker profileTracker = new ProfileTracker() {
+            @Override
+            protected void onCurrentProfileChanged(Profile oldProfile, Profile currentProfile) {
+
+
+                //Listen for changes to the profile or for a new profile: update your
+                //user data, and launch the main activity afterwards. If my user has just logged in,
+                //I make sure to update his information before launching the main Activity.
+
+                Toast.makeText(getApplicationContext(), "FB Profile Changed\n"+ currentProfile.getId(), Toast.LENGTH_LONG).show();
+
+                Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                startActivityForResult(intent, REQUEST_CODE_MAIN);
+            }
+        };
+        profileTracker.startTracking();
+         */
+
+        LoginManager.getInstance().registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
+
+            ProfileTracker profileTracker;
+            @Override
+            public void onSuccess(LoginResult loginResult) {
+
+                profileTracker = new ProfileTracker() {
                     @Override
-                    public void onSuccess(LoginResult loginResult) {
-                        // toastLoginInfo();
-                        startMainActivity();
+                    protected void onCurrentProfileChanged(Profile oldProfile, Profile currentProfile) {
+                        if(currentProfile!=null) {
+                            Toast.makeText(getApplicationContext(), currentProfile.getName(), Toast.LENGTH_LONG).show();
+                            profile = currentProfile;
+                            Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                            startActivityForResult(intent, REQUEST_CODE_MAIN);
+                        }
                     }
 
-                    @Override
-                    public void onCancel() {}
+                };
 
-                    @Override
-                    public void onError(FacebookException exception) {
-                        Toast.makeText(getApplicationContext(), exception.toString(), Toast.LENGTH_SHORT).show();
-                    }
-                });
+            }
+
+            @Override
+            public void onCancel() {}
+
+            @Override
+            public void onError(FacebookException exception) {
+                Toast.makeText(getApplicationContext(), exception.toString(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override
@@ -69,18 +104,6 @@ public class LoginActivity extends AppCompatActivity {
                     finish();
             }
         }
-    }
-
-    private void startMainActivity() {
-        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-        startActivityForResult(intent, REQUEST_CODE_MAIN);
-    }
-
-    protected void toastLoginInfo() {
-        Toast.makeText(getApplicationContext(), "엑세스 토큰:\n" + AccessToken.getCurrentAccessToken().toString(), Toast.LENGTH_SHORT).show();
-        Toast.makeText(getApplicationContext(),
-                "Facebook ID:\n" + AccessToken.getCurrentAccessToken().getUserId().toString(),
-                Toast.LENGTH_SHORT).show();
     }
 
 }
