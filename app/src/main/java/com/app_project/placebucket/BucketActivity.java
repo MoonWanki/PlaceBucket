@@ -165,7 +165,7 @@ public class BucketActivity extends AppCompatActivity {
                 HttpURLConnection con = (HttpURLConnection) url.openConnection();
                 con.setDoInput(true);
                 con.setDoOutput(true);
-                StringBuilder sb = new StringBuilder();
+                StringBuilder sb = new   StringBuilder();
 
                 /**
                 String data  = URLEncoder.encode("bno", "UTF-8")

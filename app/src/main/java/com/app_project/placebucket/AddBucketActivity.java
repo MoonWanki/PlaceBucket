@@ -58,7 +58,7 @@ public class AddBucketActivity extends AppCompatActivity {
                             jsonResponse = response.getJSONObject();
 
                             jsonFriendsData = jsonResponse.getJSONArray("data");
-
+                            Toast.makeText(getApplicationContext(), jsonResponse.getString("data"), Toast.LENGTH_LONG).show();
 
 
                         } catch (JSONException e) {
