@@ -51,20 +51,12 @@ public class MainActivity extends AppCompatActivity {
     // Progress Dialog
     private ProgressDialog pDialog;
 
-    private JSONObject jsonObject;
-    private JSONArray jsonArray;
-
     private ArrayList<SingleBucket> bucketArray = new ArrayList<>();
 
-    // url to get all products list
-    private static String url_get_user = "http://18.216.36.241/pb/get_user.php";
-    private static String url_add_user = "http://18.216.36.241/pb/add_user.php";
-
-    private static String url_get_bucket = "http://18.216.36.241/pb/get_bucket.php";
+    private static final String url_get_bucket = "http://18.216.36.241/pb/get_bucket.php";
 
     // JSON Node names
     protected static final String TAG_SUCCESS = "success";
-
     protected static final String TAG_BUCKETS = "buckets";
     protected static final String TAG_BNO = "Bno";
     protected static final String TAG_BNAME = "Bname";
@@ -102,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
 
         // new GetUser().execute(url_get_user);
 
-        new LoadAllBuckets().execute(url_get_bucket);
+        new LoadAllBuckets().execute(url_get_bucket + "?uid=" + Profile.getCurrentProfile().getId());
 
     }
 
@@ -181,59 +173,66 @@ public class MainActivity extends AppCompatActivity {
         }
 
         protected void onPostExecute(String result) {
-            // dismiss the dialog after getting all products
+
+            pDialog.dismiss();
+
+            if(result!=null) {
+
+                try {
+
+                    JSONObject jsonObject = new JSONObject(result);
+
+                    int success = jsonObject.getInt(TAG_SUCCESS);
+
+                    if (success == 0) {
+                        plzAddBucket.setText("버킷을 추가하세요.");
+                        return;
+                    } else if(success == 1) {
+
+                        JSONArray jsonArray = jsonObject.getJSONArray(TAG_BUCKETS);
+                        // updating UI from Background Thread
+
+                        for (int i = 0; i < jsonArray.length(); i++) {
+                            JSONObject j = jsonArray.getJSONObject(i);
+                            String bno = j.getString(TAG_BNO);
+                            String bname = j.getString(TAG_BNAME);
+
+                            SingleBucket b = new SingleBucket(bno, bname);
+
+                            bucketArray.add(b);
+                        }
+
+                        bucketArray.get(0).setImgId(R.drawable.img1);
+                        bucketArray.get(1).setImgId(R.drawable.img2);
+                        bucketArray.get(2).setImgId(R.drawable.img3);
+                        bucketArray.get(3).setImgId(R.drawable.img4);
+
+                        adapter = new BucketListAdapter();
+                        adapter.setList(bucketArray);
 
 
+                        listView.setAdapter(adapter);
 
-            try {
-                jsonObject = new JSONObject(result);
+                        pDialog.dismiss();
 
-                if(jsonObject.getInt(TAG_SUCCESS)==0) {
-                    plzAddBucket.setText("버킷을 추가하세요.");
-                    return;
-                }
-
-                jsonArray = jsonObject.getJSONArray(TAG_BUCKETS);
-                // updating UI from Background Thread
-
-                for(int i=0 ; i<jsonArray.length() ; i++) {
-                    JSONObject j = jsonArray.getJSONObject(i);
-                    String bno = j.getString(TAG_BNO);
-                    String bname = j.getString(TAG_BNAME);
-
-                    SingleBucket b = new SingleBucket(bno, bname);
-
-                    bucketArray.add(b);
-                }
-
-                bucketArray.get(0).setImgId(R.drawable.img1);
-                bucketArray.get(1).setImgId(R.drawable.img2);
-                bucketArray.get(2).setImgId(R.drawable.img3);
-                bucketArray.get(3).setImgId(R.drawable.img4);
-
-                adapter = new BucketListAdapter();
-                adapter.setList(bucketArray);
-
-
-
-                listView.setAdapter(adapter);
-
-                pDialog.dismiss();
-
-                listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                        SingleBucket b = (SingleBucket) adapter.getItem(i);
-                        Intent intent = new Intent(getApplicationContext(), BucketActivity.class);
-                        intent.putExtra(TAG_BNO, b.getNo());
-                        intent.putExtra(TAG_BNAME, b.getName());
-                        intent.putExtra(TAG_IMG, b.getImgId());
-                        startActivityForResult(intent, REQUEST_CODE_BUCKET);
+                        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                            @Override
+                            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                                SingleBucket b = (SingleBucket) adapter.getItem(i);
+                                Intent intent = new Intent(getApplicationContext(), BucketActivity.class);
+                                intent.putExtra(TAG_BNO, b.getNo());
+                                intent.putExtra(TAG_BNAME, b.getName());
+                                intent.putExtra(TAG_IMG, b.getImgId());
+                                startActivityForResult(intent, REQUEST_CODE_BUCKET);
+                            }
+                        });
                     }
-                });
 
-            } catch (JSONException e) {
-                e.printStackTrace();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                Toast.makeText(getApplicationContext(), "JSON response is null.", Toast.LENGTH_SHORT).show();
             }
 
         }

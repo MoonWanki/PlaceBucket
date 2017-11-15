@@ -1,6 +1,8 @@
 package com.app_project.placebucket;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.Toast;
@@ -15,14 +17,25 @@ import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Arrays;
 
 public class LoginActivity extends AppCompatActivity {
 
+    private static final String url_check_user = "http://18.216.36.241/pb/check_user.php";
+    private static final String url_add_user = "http://18.216.36.241/pb/add_user.php";
+
     private final int REQUEST_CODE_MAIN = 100;
     CallbackManager callbackManager;
     LoginButton FBLoginButton;
-    Profile profile;
+
+    private ProgressDialog pDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,51 +49,29 @@ public class LoginActivity extends AppCompatActivity {
 
         // 이미 로그인 돼 있는 상태면 바로 메인액티비티로
         if(Profile.getCurrentProfile()!=null) {
-            Toast.makeText(getApplicationContext(), "세션 있음", Toast.LENGTH_SHORT).show();
-
             Intent intent = new Intent(getApplicationContext(), MainActivity.class);
             startActivityForResult(intent, REQUEST_CODE_MAIN);
         }
 
-        /**
-        ProfileTracker profileTracker = new ProfileTracker() {
+
+        new ProfileTracker() {
             @Override
             protected void onCurrentProfileChanged(Profile oldProfile, Profile currentProfile) {
+                if(oldProfile==null && currentProfile!=null) {
 
+                    Toast.makeText(getApplicationContext(), url_check_user, Toast.LENGTH_SHORT).show();
 
-                //Listen for changes to the profile or for a new profile: update your
-                //user data, and launch the main activity afterwards. If my user has just logged in,
-                //I make sure to update his information before launching the main Activity.
+                    new CheckUser().execute(url_check_user + "?id=" + currentProfile.getId());
 
-                Toast.makeText(getApplicationContext(), "FB Profile Changed\n"+ currentProfile.getId(), Toast.LENGTH_LONG).show();
-
-                Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-                startActivityForResult(intent, REQUEST_CODE_MAIN);
+                }
             }
+
         };
-        profileTracker.startTracking();
-         */
 
         LoginManager.getInstance().registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
 
-            ProfileTracker profileTracker;
             @Override
-            public void onSuccess(LoginResult loginResult) {
-
-                profileTracker = new ProfileTracker() {
-                    @Override
-                    protected void onCurrentProfileChanged(Profile oldProfile, Profile currentProfile) {
-                        if(currentProfile!=null) {
-                            Toast.makeText(getApplicationContext(), currentProfile.getName(), Toast.LENGTH_LONG).show();
-                            profile = currentProfile;
-                            Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-                            startActivityForResult(intent, REQUEST_CODE_MAIN);
-                        }
-                    }
-
-                };
-
-            }
+            public void onSuccess(LoginResult loginResult) {}
 
             @Override
             public void onCancel() {}
@@ -92,6 +83,155 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
+    class CheckUser extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            pDialog = new ProgressDialog(LoginActivity.this);
+            pDialog.setMessage("유저 정보를 확인 중입니다...");
+            pDialog.setIndeterminate(false);
+            pDialog.setCancelable(false);
+            pDialog.show();
+        }
+
+        @Override
+        protected String doInBackground(String... strings) {
+
+            String uri = strings[0];
+            BufferedReader bufferedReader = null;
+
+
+            try {
+                URL url = new URL(uri);
+                HttpURLConnection con = (HttpURLConnection) url.openConnection();
+
+                StringBuilder sb = new StringBuilder();
+
+                bufferedReader = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                String json;
+                while((json=bufferedReader.readLine())!=null) {
+                    sb.append(json + "\n");
+                }
+
+                return sb.toString().trim();
+
+            } catch(Exception e) {
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+
+            pDialog.dismiss();
+
+            if(result!=null) {
+
+                Toast.makeText(getApplicationContext(), result, Toast.LENGTH_SHORT).show();
+
+                try {
+                    JSONObject jsonObject = new JSONObject(result);
+                    int success = jsonObject.getInt(MainActivity.TAG_SUCCESS);
+
+                    if (success == 1) {
+                        Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_LONG).show();
+
+                        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                        startActivityForResult(intent, REQUEST_CODE_MAIN);
+
+                    } else if (success == 0) {
+                        Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_LONG).show();
+
+                        new AddUser().execute(url_add_user + "?id=" + Profile.getCurrentProfile().getId() + "&name=" + Profile.getCurrentProfile().getName());
+                        Toast.makeText(getApplicationContext(),Profile.getCurrentProfile().getId(), Toast.LENGTH_LONG).show();
+
+
+                    } else if (success == -1) {
+                        Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_SHORT).show();
+                    }
+
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            } else
+                Toast.makeText(getApplicationContext(), "JSON response is null.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    class AddUser extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            pDialog = new ProgressDialog(LoginActivity.this);
+            pDialog.setMessage("유저 정보를 등록중입니다...");
+            pDialog.setIndeterminate(false);
+            pDialog.setCancelable(false);
+            pDialog.show();
+        }
+
+        @Override
+        protected String doInBackground(String... strings) {
+
+            String uri = strings[0];
+            BufferedReader bufferedReader = null;
+
+
+            try {
+                URL url = new URL(uri);
+                HttpURLConnection con = (HttpURLConnection) url.openConnection();
+
+                StringBuilder sb = new StringBuilder();
+
+                bufferedReader = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                String json;
+                while((json=bufferedReader.readLine())!=null) {
+                    sb.append(json + "\n");
+                }
+
+                return sb.toString().trim();
+
+            } catch(Exception e) {
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+
+            pDialog.dismiss();
+
+            if(result!=null) {
+
+                Toast.makeText(getApplicationContext(), result, Toast.LENGTH_SHORT).show();
+
+                try {
+                    JSONObject jsonObject = new JSONObject(result);
+                    int success = jsonObject.getInt(MainActivity.TAG_SUCCESS);
+
+                    if (success == 1) {
+                        Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_LONG).show();
+
+                        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                        startActivityForResult(intent, REQUEST_CODE_MAIN);
+
+                    } else if (success == 0) {
+                        Toast.makeText(getApplicationContext(), "registration failed", Toast.LENGTH_LONG).show();
+
+                    }
+
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            } else
+                Toast.makeText(getApplicationContext(), "JSON response is null.", Toast.LENGTH_SHORT).show();
+        }
+    }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);

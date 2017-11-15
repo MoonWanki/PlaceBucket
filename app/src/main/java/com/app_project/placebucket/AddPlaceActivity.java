@@ -102,11 +102,12 @@ public class AddPlaceActivity extends AppCompatActivity implements OnConnectionF
 
                 mViewName.setText(name);
                 mViewAddress.setText(address);
+
             } else if (resultCode == Activity.RESULT_CANCELED) {
-                finish();
+                finish(); // 틈새 보임 ㅅㅂ
             }
         } else {
-                super.onActivityResult(requestCode, resultCode, data);
+            super.onActivityResult(requestCode, resultCode, data);
         }
     }
     abstract class PhotoTask extends AsyncTask<String, Void, PhotoTask.AttributedPhoto> {
