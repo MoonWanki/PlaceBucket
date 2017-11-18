@@ -1,12 +1,12 @@
 package com.app_project.placebucket;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -23,9 +23,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.facebook.AccessToken;
-import com.facebook.GraphRequest;
 import com.facebook.Profile;
-import com.facebook.ProfileManager;
 import com.facebook.login.LoginManager;
 
 import java.io.BufferedReader;
@@ -74,7 +72,6 @@ public class MainActivity extends AppCompatActivity {
 
         String name = Profile.getCurrentProfile().getName();
         String id = Profile.getCurrentProfile().getId();
-        Toast.makeText(getApplicationContext(), "이름: " + name + "\nID: " + id, Toast.LENGTH_LONG).show();
 
         logoutButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -97,6 +94,8 @@ public class MainActivity extends AppCompatActivity {
         new LoadAllBuckets().execute(url_get_bucket + "?uid=" + Profile.getCurrentProfile().getId());
 
     }
+
+
 
     class BucketListAdapter extends BaseAdapter {
 
@@ -132,7 +131,6 @@ public class MainActivity extends AppCompatActivity {
             return view;
         }
     }
-
 
     class LoadAllBuckets extends AsyncTask<String, Void, String> {
 
@@ -239,15 +237,6 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-
-    class GetUser extends AsyncTask<String, Void, Void> {
-
-        @Override
-        protected Void doInBackground(String... strings) {
-            return null;
-        }
-    }
-
     protected void viewLogoutDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage("정말 로그아웃 하시겠습니까?");
@@ -274,7 +263,9 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         if(requestCode==REQUEST_CODE_BUCKET) {
-
+            if (resultCode == Activity.RESULT_OK) {
+                new LoadAllBuckets().execute(url_get_bucket + "?uid=" + Profile.getCurrentProfile().getId());
+            }
         }
     }
 
