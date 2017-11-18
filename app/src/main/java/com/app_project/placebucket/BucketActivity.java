@@ -101,7 +101,6 @@ public class BucketActivity extends AppCompatActivity {
         bucketNameTextView.setText(bucketName);
 
         url_get_place += "?bno=" + bucketNo;
-        Toast.makeText(getApplicationContext(), url_get_place, Toast.LENGTH_LONG).show();
         new LoadAllPlaces().execute(url_get_place);
 
     }

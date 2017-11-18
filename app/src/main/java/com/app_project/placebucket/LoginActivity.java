@@ -59,8 +59,6 @@ public class LoginActivity extends AppCompatActivity {
             protected void onCurrentProfileChanged(Profile oldProfile, Profile currentProfile) {
                 if(oldProfile==null && currentProfile!=null) {
 
-                    Toast.makeText(getApplicationContext(), url_check_user, Toast.LENGTH_SHORT).show();
-
                     new CheckUser().execute(url_check_user + "?id=" + currentProfile.getId());
 
                 }
@@ -129,23 +127,21 @@ public class LoginActivity extends AppCompatActivity {
 
             if(result!=null) {
 
-                Toast.makeText(getApplicationContext(), result, Toast.LENGTH_SHORT).show();
-
                 try {
                     JSONObject jsonObject = new JSONObject(result);
                     int success = jsonObject.getInt(MainActivity.TAG_SUCCESS);
 
                     if (success == 1) {
-                        Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_LONG).show();
+                        // Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_LONG).show();
 
                         Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                         startActivityForResult(intent, REQUEST_CODE_MAIN);
 
                     } else if (success == 0) {
-                        Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_LONG).show();
+                        // Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_LONG).show();
 
                         new AddUser().execute(url_add_user + "?id=" + Profile.getCurrentProfile().getId() + "&name=" + Profile.getCurrentProfile().getName());
-                        Toast.makeText(getApplicationContext(),Profile.getCurrentProfile().getId(), Toast.LENGTH_LONG).show();
+                        // Toast.makeText(getApplicationContext(),Profile.getCurrentProfile().getId(), Toast.LENGTH_LONG).show();
 
 
                     } else if (success == -1) {
@@ -207,14 +203,12 @@ public class LoginActivity extends AppCompatActivity {
 
             if(result!=null) {
 
-                Toast.makeText(getApplicationContext(), result, Toast.LENGTH_SHORT).show();
-
                 try {
                     JSONObject jsonObject = new JSONObject(result);
                     int success = jsonObject.getInt(MainActivity.TAG_SUCCESS);
 
                     if (success == 1) {
-                        Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_LONG).show();
+                        // Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_LONG).show();
 
                         Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                         startActivityForResult(intent, REQUEST_CODE_MAIN);
