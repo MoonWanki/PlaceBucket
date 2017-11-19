@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -46,10 +47,12 @@ public class MainActivity extends AppCompatActivity {
     ListView listView;
     BucketListAdapter adapter;
 
+    SwipeRefreshLayout swipeBucket;
+
     // Progress Dialog
     private ProgressDialog pDialog;
 
-    private ArrayList<SingleBucket> bucketArray = new ArrayList<>();
+    private ArrayList<SingleBucket> bucketArray;
 
     private static final String url_get_bucket = "http://18.216.36.241/pb/get_bucket.php";
 
@@ -90,6 +93,17 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // new GetUser().execute(url_get_user);
+
+        swipeBucket = findViewById(R.id.swipeBucket);
+
+
+
+        swipeBucket.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                new LoadAllBuckets().execute(url_get_bucket + "?uid=" + Profile.getCurrentProfile().getId());
+            }
+        });
 
         new LoadAllBuckets().execute(url_get_bucket + "?uid=" + Profile.getCurrentProfile().getId());
 
@@ -138,11 +152,15 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            pDialog = new ProgressDialog(MainActivity.this);
-            pDialog.setMessage("버킷 목록을 불러오는 중입니다...");
-            pDialog.setIndeterminate(false);
-            pDialog.setCancelable(false);
-            pDialog.show();
+
+            if(!swipeBucket.isRefreshing()) {
+                pDialog = new ProgressDialog(MainActivity.this);
+                pDialog.setMessage("버킷 목록을 불러오는 중입니다...");
+                pDialog.setIndeterminate(false);
+                pDialog.setCancelable(false);
+                pDialog.show();
+            }
+
         }
 
         // getting All products from url
@@ -178,6 +196,8 @@ public class MainActivity extends AppCompatActivity {
 
                 try {
 
+                    bucketArray = new ArrayList<>();
+
                     JSONObject jsonObject = new JSONObject(result);
 
                     int success = jsonObject.getInt(TAG_SUCCESS);
@@ -198,12 +218,9 @@ public class MainActivity extends AppCompatActivity {
                             SingleBucket b = new SingleBucket(bno, bname);
 
                             bucketArray.add(b);
-                        }
 
-                        bucketArray.get(0).setImgId(R.drawable.img1);
-                        bucketArray.get(1).setImgId(R.drawable.img2);
-                        bucketArray.get(2).setImgId(R.drawable.img3);
-                        bucketArray.get(3).setImgId(R.drawable.img4);
+                            bucketArray.get(i).setImgId(R.drawable.bucketdefault);
+                        }
 
                         adapter = new BucketListAdapter();
                         adapter.setList(bucketArray);
@@ -231,6 +248,10 @@ public class MainActivity extends AppCompatActivity {
                 }
             } else {
                 Toast.makeText(getApplicationContext(), "JSON response is null.", Toast.LENGTH_SHORT).show();
+            }
+
+            if(swipeBucket.isRefreshing()) {
+                swipeBucket.setRefreshing(false);
             }
 
         }
@@ -262,7 +283,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if(requestCode==REQUEST_CODE_BUCKET) {
+        if(requestCode==REQUEST_CODE_ADD_BUCKET) {
             if (resultCode == Activity.RESULT_OK) {
                 new LoadAllBuckets().execute(url_get_bucket + "?uid=" + Profile.getCurrentProfile().getId());
             }

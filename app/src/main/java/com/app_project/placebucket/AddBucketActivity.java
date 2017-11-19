@@ -44,6 +44,7 @@ public class AddBucketActivity extends AppCompatActivity {
 
     private static final String url_add_bucket = "http://18.216.36.241/pb/add_bucket.php";
     private static final String url_set_member = "http://18.216.36.241/pb/set_member.php";
+    private static final String url_get_latest_bucket = "http://18.216.36.241/pb/get_latest_bucket.php";
     private String userId;
 
     JSONObject jsonResponse;
@@ -222,7 +223,7 @@ public class AddBucketActivity extends AppCompatActivity {
 
                     if (success == 1) {
                         Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_SHORT).show();
-                        new AddMemberToBucket().execute(url_set_member + "?mode=" + "add");
+                        new GetNewBucket().execute(url_get_latest_bucket);
 
                     } else if (success == -1) {
                         Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_SHORT).show();
@@ -233,6 +234,74 @@ public class AddBucketActivity extends AppCompatActivity {
                 }
             } else
                 Toast.makeText(getApplicationContext(), "JSON response is null.", Toast.LENGTH_SHORT).show();
+
+        }
+    }
+
+    class GetNewBucket extends AsyncTask<String, Void, String> {
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            pDialog = new ProgressDialog(AddBucketActivity.this);
+            pDialog.setMessage("설정 내용을 적용하는 중입니다...");
+            pDialog.setIndeterminate(false);
+            pDialog.setCancelable(false);
+            pDialog.show();
+        }
+
+        @Override
+        protected String doInBackground(String... strings) {
+
+            String uri = strings[0];
+            BufferedReader bufferedReader = null;
+
+            try {
+                URL url = new URL(uri);
+                HttpURLConnection con = (HttpURLConnection) url.openConnection();
+
+                StringBuilder sb = new StringBuilder();
+
+                bufferedReader = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                String json;
+                while((json=bufferedReader.readLine())!=null) {
+                    sb.append(json + "\n");
+                }
+
+                return sb.toString().trim();
+
+            } catch(Exception e) {
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            pDialog.dismiss();
+            String bno="";
+
+            if(result!=null) {
+
+                try {
+                    JSONObject jsonObject = new JSONObject(result);
+                    bno = jsonObject.getString(MainActivity.TAG_BNO);
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            } else
+                Toast.makeText(getApplicationContext(), "JSON response is null.", Toast.LENGTH_SHORT).show();
+
+            String ids = "&id[]=" + Profile.getCurrentProfile().getId();
+
+            for(int i=0 ; i<idArray.size() ; i++) {
+                ids += "&id[]=" + idArray.get(i);
+            }
+
+
+            new AddMemberToBucket().execute(url_set_member + "?mode=add&bno=" + bno + ids);
+
+            Toast.makeText(getApplicationContext(), url_set_member + "?mode=add&bno=" + bno + ids, Toast.LENGTH_LONG).show();
 
         }
     }
@@ -252,6 +321,7 @@ public class AddBucketActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(String... strings) {
             String uri = strings[0];
+
             BufferedReader bufferedReader = null;
 
             try {
@@ -284,14 +354,13 @@ public class AddBucketActivity extends AppCompatActivity {
                     int success = jsonObject.getInt(MainActivity.TAG_SUCCESS);
 
                     if (success == 1) {
-                        Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_SHORT).show();
+
+                        Toast.makeText(getApplicationContext(), "성공ㅋ", Toast.LENGTH_SHORT).show();
                         setResult(Activity.RESULT_OK);
                         finish();
 
                     } else if (success == -1) {
                         Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_SHORT).show();
-                        setResult(Activity.RESULT_OK); // 빼야함
-                        finish(); // 빼야함
                     }
 
                 } catch (JSONException e) {
