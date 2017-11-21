@@ -115,7 +115,7 @@ public class AddPlaceActivity extends AppCompatActivity implements OnConnectionF
                 if (attributions != null) {
                     mViewAttributions.setText(attributions);
                 }
-                new CheckPlace().execute(url_check_place + "?id=" + id+ "&?Bno=" + getIntent().getStringExtra("bno"));
+                new CheckPlace().execute(url_check_place + "?pid=" + id+ "&bno=" + getIntent().getStringExtra("bno"));
             } else if (resultCode == Activity.RESULT_CANCELED) {
                 finish(); // 틈새 보임 ㅅㅂ
             }
@@ -179,8 +179,8 @@ public class AddPlaceActivity extends AppCompatActivity implements OnConnectionF
 
                     } else if (success == 0) {
                          Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_LONG).show();
-
-                        new AddPlace().execute(url_check_place + "?id=" + id+ "&?Bno=" + getIntent().getStringExtra("bno"));
+                        Toast.makeText(getApplicationContext(), url_add_place + "?pid=" + id + "&bno=" + getIntent().getStringExtra("bno") + "&pname="+name +"&paddress="+address, Toast.LENGTH_LONG).show();
+                        new AddPlace().execute(url_add_place + "?pid=" + id + "&bno=" + getIntent().getStringExtra("bno") + "&pname="+name +"&paddress="+address);
                         //Toast.makeText(getApplicationContext(),Profile.getCurrentProfile().getId(), Toast.LENGTH_LONG).show();
 
 
@@ -249,12 +249,12 @@ public class AddPlaceActivity extends AppCompatActivity implements OnConnectionF
 
                     if (success == 1) {
                         Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_LONG).show();
-
+                        setResult(Activity.RESULT_OK);
+                        finish();
 
                     } else if (success == 0) {
                         // Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_LONG).show();
-
-                        new AddPlace().execute(url_add_place + "?pid=" + id);
+                        Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_SHORT).show();
                         // Toast.makeText(getApplicationContext(),Profile.getCurrentProfile().getId(), Toast.LENGTH_LONG).show();
 
 
