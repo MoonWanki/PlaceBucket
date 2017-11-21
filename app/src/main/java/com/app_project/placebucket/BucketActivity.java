@@ -166,13 +166,6 @@ public class BucketActivity extends AppCompatActivity {
                 con.setDoOutput(true);
                 StringBuilder sb = new   StringBuilder();
 
-                /**
-                String data  = URLEncoder.encode("bno", "UTF-8")
-                        + "=" + URLEncoder.encode(bucketNo, "UTF-8");
-
-                OutputStreamWriter outputStreamWriter = new OutputStreamWriter(con.getOutputStream(), "UTF8");
-                outputStreamWriter.write(data);
-                 */
                 bufferedReader = new BufferedReader(new InputStreamReader(con.getInputStream()));
                 String json;
                 while((json=bufferedReader.readLine())!=null) {
@@ -213,14 +206,9 @@ public class BucketActivity extends AppCompatActivity {
 
                     placeArray.add(p);
 
-                    placeArray.get(i).setImgId(R.drawable.p701);
+                    placeArray.get(i).setImgId(R.drawable.placedefault);
                 }
 
-                // placeArray.get(0).setImgId(R.drawable.p701);
-                // placeArray.get(1).setImgId(R.drawable.p702);
-                // placeArray.get(2).setImgId(R.drawable.p703);
-                // placeArray.get(3).setImgId(R.drawable.p704);
-                // placeArray.get(4).setImgId(R.drawable.p705);
 
                 adapter = new PlaceListAdapter();
                 adapter.setList(placeArray);

@@ -277,7 +277,6 @@ public class AddBucketActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(String result) {
-            pDialog.dismiss();
             String bno="";
 
             if(result!=null) {
@@ -307,16 +306,6 @@ public class AddBucketActivity extends AppCompatActivity {
     }
 
     class AddMemberToBucket extends AsyncTask<String, Void, String> {
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-
-            pDialog = new ProgressDialog(AddBucketActivity.this);
-            pDialog.setMessage("설정 내용을 적용하는 중입니다...");
-            pDialog.setIndeterminate(false);
-            pDialog.setCancelable(false);
-            pDialog.show();
-        }
 
         @Override
         protected String doInBackground(String... strings) {

@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
 
     private ArrayList<SingleBucket> bucketArray;
 
-    private static final String url_get_bucket = "http://18.216.36.241/pb/get_bucket.php";
+    private static final String url_get_bucket = "http://18.216.36.241/pb/get_all_buckets.php";
 
     // JSON Node names
     protected static final String TAG_SUCCESS = "success";
@@ -240,6 +240,17 @@ public class MainActivity extends AppCompatActivity {
                                 intent.putExtra(TAG_IMG, b.getImgId());
                                 startActivityForResult(intent, REQUEST_CODE_BUCKET);
                             }
+
+
+                        });
+
+
+                        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+                            @Override
+                            public boolean onItemLongClick(final AdapterView<?> adapterView, View view, int i, long l) {
+                                viewBucketMenuDialog(i);
+                                return true;
+                            }
                         });
                     }
 
@@ -256,6 +267,30 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
+    }
+
+    protected  void viewBucketMenuDialog(int position) {
+        CharSequence menu[] = new CharSequence[] {"버킷 상단 고정", "나가기"};
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(bucketArray.get(position).getName());
+        builder.setItems(menu, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+                switch(which) {
+                    case 0:
+                        Toast.makeText(getApplicationContext(), "지원하지 않는 기능입니다.", Toast.LENGTH_SHORT).show();
+                        break;
+                    case 1:
+                        Toast.makeText(getApplicationContext(), "지원하지 않는 기능입니다.", Toast.LENGTH_SHORT).show();
+                        break;
+                    default:
+                        break;
+                }
+            }
+        });
+        builder.show();
     }
 
     protected void viewLogoutDialog() {
