@@ -1,6 +1,7 @@
 package com.app_project.placebucket;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.media.Image;
@@ -31,14 +32,29 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
 import android.support.v4.app.FragmentActivity;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 
 public class AddPlaceActivity extends AppCompatActivity implements OnConnectionFailedListener{
 
     ImageView backButton;
     public GoogleApiClient mGoogleApiClient;
+    private ProgressDialog pDialog;
+    private static final String url_check_place = "http://18.216.36.241/pb/check_place.php";
+    private static final String url_add_place = "http://18.216.36.241/pb/add_place.php";
 
     private static final int REQUEST_PLACE_PICKER = 1;
+    private static  Place place ;
+    private static  String id ;
+    private static  CharSequence name;
+    private static CharSequence address ;
+    private static CharSequence attributions ;
 
     TextView mViewName;
     TextView mViewAddress;
@@ -90,19 +106,16 @@ public class AddPlaceActivity extends AppCompatActivity implements OnConnectionF
 
             if (resultCode == Activity.RESULT_OK) {
                 // The user has selected a place. Extract the name and address.
-                final Place place = PlacePicker.getPlace(data, this);
-                final String id = place.getId();
-                final CharSequence name = place.getName();
-                final CharSequence address = place.getAddress();
-                final CharSequence attributions = place.getAttributions();
+                place = PlacePicker.getPlace(data, this);
+                id = place.getId();
+                name = place.getName();
+                address = place.getAddress();
+               attributions = place.getAttributions();
 
                 if (attributions != null) {
                     mViewAttributions.setText(attributions);
                 }
-
-                mViewName.setText(name);
-                mViewAddress.setText(address);
-
+                new CheckPlace().execute(url_check_place + "?id=" + id+ "&?Bno=" + getIntent().getStringExtra("bno"));
             } else if (resultCode == Activity.RESULT_CANCELED) {
                 finish(); // 틈새 보임 ㅅㅂ
             }
@@ -110,66 +123,151 @@ public class AddPlaceActivity extends AppCompatActivity implements OnConnectionF
             super.onActivityResult(requestCode, resultCode, data);
         }
     }
-    abstract class PhotoTask extends AsyncTask<String, Void, PhotoTask.AttributedPhoto> {
+    class CheckPlace extends AsyncTask<String, Void, String> {
 
-        private int mHeight;
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
 
-        private int mWidth;
-
-        public PhotoTask(int width, int height) {
-            mHeight = height;
-            mWidth = width;
+            pDialog = new ProgressDialog(AddPlaceActivity.this);
+            pDialog.setMessage("장소 정보를 확인 중입니다...");
+            pDialog.setIndeterminate(false);
+            pDialog.setCancelable(false);
+            pDialog.show();
         }
 
-        /**
-         * Loads the first photo for a place id from the Geo Data API.
-         * The place id must be the first (and only) parameter.
-         */
         @Override
-        protected AttributedPhoto doInBackground(String... params) {
-            if (params.length != 1) {
-                return null;
-            }
+        protected String doInBackground(String... strings) {
 
-            final String placeId = params[0];
-            AttributedPhoto attributedPhoto = null;
+            String uri = strings[0];
+            BufferedReader bufferedReader = null;
 
-            PlacePhotoMetadataResult result = Places.GeoDataApi
-                    .getPlacePhotos(mGoogleApiClient, placeId).await();
 
-            if (result.getStatus().isSuccess()) {
-                PlacePhotoMetadataBuffer photoMetadataBuffer = result.getPhotoMetadata();
-                if (photoMetadataBuffer.getCount() > 0 && !isCancelled()) {
-                    // Get the first bitmap and its attributions.
-                    PlacePhotoMetadata photo = photoMetadataBuffer.get(0);
-                    CharSequence attribution = photo.getAttributions();
-                    // Load a scaled bitmap for this photo.
-                    Bitmap image = photo.getScaledPhoto(mGoogleApiClient, mWidth, mHeight).await()
-                            .getBitmap();
+            try {
+                URL url = new URL(uri);
+                HttpURLConnection con = (HttpURLConnection) url.openConnection();
 
-                    attributedPhoto = new AttributedPhoto(attribution, image);
+                StringBuilder sb = new StringBuilder();
 
+                bufferedReader = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                String json;
+                while((json=bufferedReader.readLine())!=null) {
+                    sb.append(json + "\n");
                 }
 
-                // Release the PlacePhotoMetadataBuffer.
-                photoMetadataBuffer.release();
+                return sb.toString().trim();
+
+            } catch(Exception e) {
+                return null;
             }
-            return attributedPhoto;
         }
 
-        /**
-         * Holder for an image and its attribution.
-         */
-        class AttributedPhoto {
+        @Override
+        protected void onPostExecute(String result) {
 
-            public final CharSequence attribution;
+            pDialog.dismiss();
 
-            public final Bitmap bitmap;
+            if(result!=null) {
 
-            public AttributedPhoto(CharSequence attribution, Bitmap bitmap) {
-                this.attribution = attribution;
-                this.bitmap = bitmap;
+                try {
+                    JSONObject jsonObject = new JSONObject(result);
+                    int success = jsonObject.getInt(MainActivity.TAG_SUCCESS);
+
+                    if (success == 1) {
+                         Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_LONG).show();
+
+
+                    } else if (success == 0) {
+                         Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_LONG).show();
+
+                        new AddPlace().execute(url_check_place + "?id=" + id+ "&?Bno=" + getIntent().getStringExtra("bno"));
+                        //Toast.makeText(getApplicationContext(),Profile.getCurrentProfile().getId(), Toast.LENGTH_LONG).show();
+
+
+                    } else if (success == -1) {
+                        Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_SHORT).show();
+                    }
+
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            } else
+                Toast.makeText(getApplicationContext(), "JSON response is null.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    class AddPlace extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            pDialog = new ProgressDialog(AddPlaceActivity.this);
+            pDialog.setMessage(" 장소를 등록 중입니다...");
+            pDialog.setIndeterminate(false);
+            pDialog.setCancelable(false);
+            pDialog.show();
+        }
+
+        @Override
+        protected String doInBackground(String... strings) {
+
+            String uri = strings[0];
+            BufferedReader bufferedReader = null;
+
+
+            try {
+                URL url = new URL(uri);
+                HttpURLConnection con = (HttpURLConnection) url.openConnection();
+
+                StringBuilder sb = new StringBuilder();
+
+                bufferedReader = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                String json;
+                while((json=bufferedReader.readLine())!=null) {
+                    sb.append(json + "\n");
+                }
+
+                return sb.toString().trim();
+
+            } catch(Exception e) {
+                return null;
             }
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+
+            pDialog.dismiss();
+
+            if(result!=null) {
+
+                try {
+                    JSONObject jsonObject = new JSONObject(result);
+                    int success = jsonObject.getInt(MainActivity.TAG_SUCCESS);
+
+                    if (success == 1) {
+                        Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_LONG).show();
+
+
+                    } else if (success == 0) {
+                        // Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_LONG).show();
+
+                        new AddPlace().execute(url_add_place + "?pid=" + id);
+                        // Toast.makeText(getApplicationContext(),Profile.getCurrentProfile().getId(), Toast.LENGTH_LONG).show();
+
+
+                    } else if (success == -1) {
+                        Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_SHORT).show();
+                    }
+
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            } else
+                Toast.makeText(getApplicationContext(), "JSON response is null.", Toast.LENGTH_SHORT).show();
         }
     }
 

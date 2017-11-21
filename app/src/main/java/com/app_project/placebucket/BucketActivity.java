@@ -78,6 +78,7 @@ public class BucketActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(getApplicationContext(), AddPlaceActivity.class);
+                intent.putExtra("bno", bucketNo);
                 startActivityForResult(intent, REQUEST_CODE_ADD_PLACE);
             }
         });
