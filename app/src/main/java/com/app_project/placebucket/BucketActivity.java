@@ -1,18 +1,22 @@
 package com.app_project.placebucket;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -37,7 +41,7 @@ public class BucketActivity extends AppCompatActivity {
     private final int REQUEST_CODE_ADD_PLACE = 301;
 
     private String url_get_place = "http://18.216.36.241/pb/get_place.php";
-
+    private String url_del_place = "http://18.216.36.241/pb/del_place.php";
     private static final String TAG_SUCCESS = "success";
     private static final String TAG_PLACES = "places";
     private static final String TAG_PID = "Pid";
@@ -71,6 +75,7 @@ public class BucketActivity extends AppCompatActivity {
         bucketNameTextView = findViewById(R.id.bucket_title_name);
         plzAddPlace = findViewById(R.id.plzAddPlace);
         listView = findViewById(R.id.list_place);
+
 
         FloatingActionButton fab = findViewById(R.id.fab_bucket);
 
@@ -195,6 +200,8 @@ public class BucketActivity extends AppCompatActivity {
                     return;
                 }
 
+                plzAddPlace.setText("");
+
                 jsonArray = jsonObject.getJSONArray(TAG_PLACES);
                 // updating UI from Background Thread
 
@@ -222,6 +229,13 @@ public class BucketActivity extends AppCompatActivity {
                         Toast.makeText(getApplicationContext(), placeArray.get(i).getName() + " 입니다.", Toast.LENGTH_SHORT).show();
                     }
                 });
+                listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+                    @Override
+                    public boolean onItemLongClick(final AdapterView<?> adapterView, View view, int i, long l) {
+                        viewPlaceMenuDialog(i);
+                        return true;
+                    }
+                });
 
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -230,14 +244,115 @@ public class BucketActivity extends AppCompatActivity {
         }
 
     }
+    protected  void viewPlaceMenuDialog(final int position) {
+        CharSequence menu[] = new CharSequence[] {"영정각?"};
 
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(placeArray.get(position).getName());
+        builder.setItems(menu, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+                switch(which) {
+                    case 0:
+                        new DelPlace().execute(url_del_place + "?pid=" + placeArray.get(position).getId()+ "&bno=" + bucketNo);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        });
+        builder.show();
+    }
+    class DelPlace extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            pDialog = new ProgressDialog(BucketActivity.this);
+            pDialog.setMessage(" 장소를  삭제중입니다...");
+            pDialog.setIndeterminate(false);
+            pDialog.setCancelable(false);
+            pDialog.show();
+        }
+
+        @Override
+        protected String doInBackground(String... strings) {
+
+
+            String uri = strings[0];
+            BufferedReader bufferedReader = null;
+
+
+            try {
+                URL url = new URL(uri);
+                HttpURLConnection con = (HttpURLConnection) url.openConnection();
+
+                StringBuilder sb = new StringBuilder();
+
+                bufferedReader = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                String json;
+                while((json=bufferedReader.readLine())!=null) {
+                    sb.append(json + "\n");
+                }
+
+                return sb.toString().trim();
+
+            } catch(Exception e) {
+                return null;
+            }
+        }
+        @Override
+        protected void onPostExecute(String result) {
+
+            pDialog.dismiss();
+
+
+
+            if(result!=null) {
+
+                try {
+                    JSONObject jsonObject = new JSONObject(result);
+                    int success = jsonObject.getInt(MainActivity.TAG_SUCCESS);
+
+                    if (success == 1) {
+                        Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_LONG).show();
+                        recreate();
+
+
+                    } else if (success == 0) {
+                        // Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_LONG).show();
+                        Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_SHORT).show();
+                        // Toast.makeText(getApplicationContext(),Profile.getCurrentProfile().getId(), Toast.LENGTH_LONG).show();
+
+
+                    } else if (success == -1) {
+                        Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_SHORT).show();
+
+                    }
+
+
+
+                } catch (JSONException e) {
+
+                    e.printStackTrace();
+                }
+            } else
+                Toast.makeText(getApplicationContext(), "JSON response is null.", Toast.LENGTH_SHORT).show();
+        }
+    }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
         if(requestCode == REQUEST_CODE_ADD_PLACE && resultCode == Activity.RESULT_OK) {
-            new LoadAllPlaces().execute(url_get_place);
-        } else {
+            recreate();
+            //new LoadAllPlaces().execute(url_get_place);
+        }
+
+        else {
             super.onActivityResult(requestCode, resultCode, data);
         }
     }
+
 }
