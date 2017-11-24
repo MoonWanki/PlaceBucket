@@ -1,7 +1,9 @@
 package com.app_project.placebucket;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.media.Image;
@@ -56,9 +58,9 @@ public class AddPlaceActivity extends AppCompatActivity implements OnConnectionF
     private static CharSequence address ;
     private static CharSequence attributions ;
 
-    TextView mViewName;
-    TextView mViewAddress;
-    TextView mViewAttributions;
+   // TextView mViewName;
+    //TextView mViewAddress;
+    //TextView mViewAttributions;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,9 +74,7 @@ public class AddPlaceActivity extends AppCompatActivity implements OnConnectionF
                 .addApi(Places.PLACE_DETECTION_API)
                 .enableAutoManage(this, this)
                 .build();
-        mViewName = findViewById(R.id.mViewName);
-        mViewAddress = findViewById(R.id.mViewAddress);
-        mViewAttributions = findViewById(R.id.mViewAttributions);
+
 
         backButton = findViewById(R.id.back_button_2);
         backButton.setOnClickListener(new View.OnClickListener() {
@@ -113,11 +113,28 @@ public class AddPlaceActivity extends AppCompatActivity implements OnConnectionF
                attributions = place.getAttributions();
 
                 if (attributions != null) {
-                    mViewAttributions.setText(attributions);
+                    //mViewAttributions.setText(attributions);
                 }
                 new CheckPlace().execute(url_check_place + "?pid=" + id+ "&bno=" + getIntent().getStringExtra("bno"));
             } else if (resultCode == Activity.RESULT_CANCELED) {
-                finish(); // 틈새 보임 ㅅㅂ
+                AlertDialog.Builder alert_confirm = new AlertDialog.Builder(AddPlaceActivity.this);
+                alert_confirm.setMessage("그만할꺼?").setCancelable(false).setPositiveButton("ㅇㅇ",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                finish();  // 'YES'
+                            }
+                        }).setNegativeButton("ㄴㄴ",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                recreate();// 'No'
+                            }
+                        });
+                AlertDialog alert = alert_confirm.create();
+                alert.show();
+
+
             }
         } else {
             super.onActivityResult(requestCode, resultCode, data);
@@ -244,13 +261,13 @@ public class AddPlaceActivity extends AppCompatActivity implements OnConnectionF
             if(result!=null) {
 
                 try {
-                    JSONObject jsonObject = new JSONObject(result);
-                    int success = jsonObject.getInt(MainActivity.TAG_SUCCESS);
+                                           JSONObject jsonObject = new JSONObject(result);
+                        int success = jsonObject.getInt(MainActivity.TAG_SUCCESS);
 
-                    if (success == 1) {
-                        Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_LONG).show();
-                        setResult(Activity.RESULT_OK);
-                        finish();
+                        if (success == 1) {
+                            Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_LONG).show();
+                            setResult(Activity.RESULT_OK);
+                            finish();
 
                     } else if (success == 0) {
                         // Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_LONG).show();
