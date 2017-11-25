@@ -10,6 +10,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -26,12 +27,22 @@ import org.json.JSONObject;
 import com.facebook.AccessToken;
 import com.facebook.Profile;
 import com.facebook.login.LoginManager;
+import com.google.firebase.iid.FirebaseInstanceId;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Headers;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -62,6 +73,10 @@ public class MainActivity extends AppCompatActivity {
     protected static final String TAG_BNO = "Bno";
     protected static final String TAG_BNAME = "Bname";
     protected static final String TAG_IMG = "img";
+
+
+    private static final String TAG = "MyTag";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,8 +122,36 @@ public class MainActivity extends AppCompatActivity {
 
         new LoadAllBuckets().execute(url_get_bucket + "?uid=" + Profile.getCurrentProfile().getId());
 
+        try { setToken(Profile.getCurrentProfile().getId(), FirebaseInstanceId.getInstance().getToken()); } catch (Exception e) { e.printStackTrace(); }
+
     }
 
+    public void setToken(String id, String token) throws Exception {
+        Request request = new Request.Builder()
+                .url("http://18.216.36.241/pb/register_fcm_token.php?id=" + id + "&token=" + token).build();
+
+        OkHttpClient client = new OkHttpClient();
+
+        client.newCall(request).enqueue(new Callback() {
+
+            @Override public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+            }
+
+            @Override public void onResponse(Call call, Response response) throws IOException {
+
+                ResponseBody responseBody = response.body();
+                if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
+
+                Headers responseHeaders = response.headers();
+                for (int i = 0, size = responseHeaders.size(); i < size; i++) {
+                    Log.d(TAG, responseHeaders.name(i) + ": " + responseHeaders.value(i));
+                }
+
+                Log.d(TAG, responseBody.string());
+            }
+        });
+    }
 
 
     class BucketListAdapter extends BaseAdapter {
@@ -204,8 +247,10 @@ public class MainActivity extends AppCompatActivity {
 
                     if (success == 0) {
                         plzAddBucket.setText("버킷을 추가하세요.");
-                        return;
+
                     } else if(success == 1) {
+
+                        plzAddBucket.setText("");
 
                         JSONArray jsonArray = jsonObject.getJSONArray(TAG_BUCKETS);
                         // updating UI from Background Thread
@@ -225,10 +270,7 @@ public class MainActivity extends AppCompatActivity {
                         adapter = new BucketListAdapter();
                         adapter.setList(bucketArray);
 
-
                         listView.setAdapter(adapter);
-
-                        pDialog.dismiss();
 
                         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                             @Override
