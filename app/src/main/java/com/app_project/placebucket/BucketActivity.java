@@ -314,7 +314,7 @@ public class BucketActivity extends AppCompatActivity implements OnConnectionFai
 
 
     protected  void viewPlaceMenuDialog(final int position) {
-        CharSequence menu[] = new CharSequence[] {"영정각?"};
+        CharSequence menu[] = new CharSequence[] {"장소를 삭제하시겠습니까?"};
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(placeArray.get(position).getName());

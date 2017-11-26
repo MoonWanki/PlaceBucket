@@ -57,9 +57,6 @@
         <activity
             android:name=".BucketActivity"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity
-            android:name=".AddPlaceActivity"
-            android:theme="@style/AppTheme.NoActionBar" />
 
         <service
             android:name=".MyFirebaseInstanceIDService">
