@@ -6,8 +6,11 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.design.widget.AppBarLayout;
+import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -16,9 +19,25 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import android.app.FragmentManager;
+import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
+import android.view.View;
+import android.support.design.widget.NavigationView;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.widget.ToggleButton;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -44,20 +63,23 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity{
+
 
     private final int REQUEST_CODE_BUCKET = 201;
     private final int REQUEST_CODE_ADD_BUCKET = 202;
 
     private final long FINISH_INTERVAL_TIME = 1500;
     private long backPressedTime = 0;
-
+    private DrawerLayout mDrawerLayout;
+    ImageView userImage;
+    Toolbar toolbar;
     TextView plzAddBucket;
     Button logoutButton;
     FloatingActionButton floatingActionButton;
     ListView listView;
     BucketListAdapter adapter;
-
+   // CollapsingToolbarLayout toolbar;
     SwipeRefreshLayout swipeBucket;
 
     // Progress Dialog
@@ -83,20 +105,53 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
+           toolbar=findViewById(R.id.toolbar);
+        {
+            setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
+            final ActionBar ab = getSupportActionBar();
+            ab.setHomeAsUpIndicator(R.drawable.ic_menu);
+            ab.setDisplayHomeAsUpEnabled(true);
+
+
+        }
+
+        {
+            mDrawerLayout = findViewById(R.id.drawer_layout);
+
+            ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                    this,mDrawerLayout,toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+            mDrawerLayout.setDrawerListener(toggle);
+            toggle.syncState();
+            NavigationView navigationView =  findViewById(R.id.nav_view);
+            navigationView.setNavigationItemSelectedListener(
+
+                    new NavigationView.OnNavigationItemSelectedListener() {
+                        @Override
+                        public boolean onNavigationItemSelected(MenuItem menuItem) {
+                            menuItem.setChecked(true);
+                            mDrawerLayout.closeDrawers();
+                            return true;
+                        }
+                    });
+        }
+
+
+
         plzAddBucket = findViewById(R.id.plzAddBucket);
-        logoutButton = findViewById(R.id.logoutButton);
+       // logoutButton = findViewById(R.id.logoutButton);
         floatingActionButton = findViewById(R.id.fab_main);
         listView = findViewById(R.id.list_bucket);
 
         String name = Profile.getCurrentProfile().getName();
         String id = Profile.getCurrentProfile().getId();
 
-        logoutButton.setOnClickListener(new View.OnClickListener() {
+       /* logoutButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 viewLogoutDialog();
             }
-        });
+        });*/
 
         // Floating Button - go to AddBucketActivity
         floatingActionButton.setOnClickListener(new View.OnClickListener() {
@@ -108,7 +163,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // new GetUser().execute(url_get_user);
-
         swipeBucket = findViewById(R.id.swipeBucket);
 
 
@@ -385,5 +439,28 @@ public class MainActivity extends AppCompatActivity {
             backPressedTime = tempTime;
             Toast.makeText(getApplicationContext(), "뒤로 버튼을 한번 더 누르면 종료됩니다.", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        switch(item.getItemId()){
+            case R.id.logout:
+                viewLogoutDialog();
+                return true;
+            case R.id.settings:
+                Toast.makeText(getApplicationContext(), "힝 속았징", Toast.LENGTH_SHORT).show();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

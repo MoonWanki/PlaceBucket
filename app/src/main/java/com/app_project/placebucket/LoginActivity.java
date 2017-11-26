@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.facebook.AccessToken;
@@ -34,6 +35,7 @@ public class LoginActivity extends AppCompatActivity {
     private final int REQUEST_CODE_MAIN = 100;
     CallbackManager callbackManager;
     LoginButton FBLoginButton;
+
 
     private ProgressDialog pDialog;
 
