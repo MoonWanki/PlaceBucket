@@ -53,7 +53,6 @@ public class AddPlaceActivity extends AppCompatActivity implements OnConnectionF
     ImageView backButton;
     TextView mText1;
     TextView mText2;
-    public GoogleApiClient mGoogleApiClient;
     public GoogleMap mMap;
     private ProgressDialog pDialog;
     private static final String url_check_place = "http://18.216.36.241/pb/check_place.php";
@@ -75,12 +74,7 @@ public class AddPlaceActivity extends AppCompatActivity implements OnConnectionF
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_place);
 
-        mGoogleApiClient = new GoogleApiClient
-                .Builder(this)
-                .addApi(Places.GEO_DATA_API)
-                .addApi(Places.PLACE_DETECTION_API)
-                .enableAutoManage(this, this)
-                .build();
+
         mText1 = findViewById(R.id.textview1);
         mText2 = findViewById(R.id.textview2);
         mImageView = findViewById(R.id.imageView2);
@@ -204,7 +198,6 @@ public class AddPlaceActivity extends AppCompatActivity implements OnConnectionF
 
                     } else if (success == 0) {
                          Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_LONG).show();
-                        Toast.makeText(getApplicationContext(), url_add_place + "?pid=" + id + "&bno=" + getIntent().getStringExtra("bno") + "&pname="+name +"&paddress="+address, Toast.LENGTH_LONG).show();
                         new AddPlace().execute(url_add_place + "?pid=" + id + "&bno=" + getIntent().getStringExtra("bno") + "&pname="+name +"&paddress="+address);
                         //Toast.makeText(getApplicationContext(),Profile.getCurrentProfile().getId(), Toast.LENGTH_LONG).show();
 
@@ -269,12 +262,11 @@ public class AddPlaceActivity extends AppCompatActivity implements OnConnectionF
             if(result!=null) {
 
                 try {
-                                           JSONObject jsonObject = new JSONObject(result);
+                    JSONObject jsonObject = new JSONObject(result);
                         int success = jsonObject.getInt(MainActivity.TAG_SUCCESS);
 
                         if (success == 1) {
                             Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_LONG).show();
-                            new PhotoTask(26,26).execute(id);
                             setResult(Activity.RESULT_OK);
                             finish();
 
@@ -297,91 +289,6 @@ public class AddPlaceActivity extends AppCompatActivity implements OnConnectionF
         }
     }
 
-    class PhotoTask extends AsyncTask<String,Void ,AttributedPhoto> {
-
-        private int mHeight;
-
-        private int mWidth;
-
-        public PhotoTask(int width, int height) {
-            mHeight = height;
-            mWidth = width;
-        }
-
-        /**
-         * Loads the first photo for a place id from the Geo Data API.
-         * The place id must be the first (and only) parameter.
-         */
-        @Override
-        protected void onPreExecute() {
-            // Display a temporary image to show while bitmap is loading.
-            mImageView.setImageResource(R.drawable.bucketdefault);
-        }
-
-        @Override
-        protected AttributedPhoto doInBackground(String... params) {
-            if (params.length != 1) {
-                return null;
-            }
-            final String placeId = params[0];
-            AttributedPhoto attributedPhoto = null;
-
-            PlacePhotoMetadataResult result = Places.GeoDataApi
-                    .getPlacePhotos(mGoogleApiClient, placeId).await();
-
-            if (result.getStatus().isSuccess()) {
-                PlacePhotoMetadataBuffer photoMetadataBuffer = result.getPhotoMetadata();
-                if (result.getPhotoMetadata().getCount() > 0 && !isCancelled()) {
-                    // Get the first bitmap and its attributions.
-                    PlacePhotoMetadata photo = result.getPhotoMetadata().get(0);
-                    CharSequence attribution = photo.getAttributions();
-                    // Load a scaled bitmap for this photo.
-                    Bitmap image = photo.getScaledPhoto(mGoogleApiClient, mWidth, mHeight).await()
-                            .getBitmap();
-
-                    attributedPhoto = new AttributedPhoto(attribution, image);
-                }
-                // Release the PlacePhotoMetadataBuffer.
-                photoMetadataBuffer.release();
-            }
-            return attributedPhoto;
-        }
-
-                // Create a new AsyncTask that displays the bitmap and attribution once loaded.
-
-                    @Override
-                    protected void onPostExecute(AttributedPhoto attributedPhoto) {
-                        if (attributedPhoto != null) {
-                            Toast.makeText(getApplicationContext(), "이미지 로드 됨", Toast.LENGTH_SHORT).show();
-
-                            // Photo has been loaded, display it.
-                            mImageView.setImageBitmap(attributedPhoto.bitmap);
-                            Toast.makeText(getApplicationContext(), attributedPhoto.attribution, Toast.LENGTH_SHORT).show();
-                            // Display the attribution as HTML content if set.
-                            if (attributedPhoto.attribution == null) {
-                                mText1.setVisibility(View.GONE);
-                            } else {
-                                mText1.setVisibility(View.VISIBLE);
-                                mText1.setText(Html.fromHtml(attributedPhoto.attribution.toString()));
-                            }
-
-                        }
-                    }
-                }
-        /**
-         * Holder for an image and its attribution.
-         */
-        class AttributedPhoto {
-
-            public final CharSequence attribution;
-
-            public final Bitmap bitmap;
-
-            public AttributedPhoto(CharSequence attribution, Bitmap bitmap) {
-                this.attribution = attribution;
-                this.bitmap = bitmap;
-            }
-        }
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
