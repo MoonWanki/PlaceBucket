@@ -342,8 +342,6 @@ public class AddBucketActivity extends AppCompatActivity {
 
                 try{ pushNewBucket(idArray.get(i)); } catch (Exception e) { e.printStackTrace(); }
             }
-
-
             new AddMemberToBucket().execute(url_set_member + "?mode=add&bno=" + bno + ids);
 
         }

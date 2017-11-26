@@ -274,9 +274,9 @@ public class AddPlaceActivity extends AppCompatActivity implements OnConnectionF
 
                         if (success == 1) {
                             Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_LONG).show();
-                            new PhotoTask(500,500).execute(id);
+                            new PhotoTask(26,26).execute(id);
                             setResult(Activity.RESULT_OK);
-                            //finish();
+                            finish();
 
                     } else if (success == 0) {
                         // Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_LONG).show();
