@@ -365,7 +365,7 @@ public class MainActivity extends AppCompatActivity{
 
     }
 
-    protected  void viewBucketMenuDialog(int position) {
+    protected  void viewBucketMenuDialog(final int position) {
         CharSequence menu[] = new CharSequence[] {"버킷 상단 고정", "나가기"};
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -379,7 +379,11 @@ public class MainActivity extends AppCompatActivity{
                         Toast.makeText(getApplicationContext(), "지원하지 않는 기능입니다.", Toast.LENGTH_SHORT).show();
                         break;
                     case 1:
-                        Toast.makeText(getApplicationContext(), "지원하지 않는 기능입니다.", Toast.LENGTH_SHORT).show();
+                        try {
+                            delBucket(bucketArray.get(position).getNo());
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                         break;
                     default:
                         break;
@@ -463,4 +467,43 @@ public class MainActivity extends AppCompatActivity{
         }
         return super.onOptionsItemSelected(item);
     }
+    public void delBucket(String bno) throws Exception {
+        Request request = new Request.Builder()
+                .url("http://18.216.36.241/pb/set_member.php?mode=del&id="+Profile.getCurrentProfile().getId()+"&bno="+bno).build();
+
+        OkHttpClient client = new OkHttpClient();
+
+        client.newCall(request).enqueue(new Callback() {
+
+            @Override public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+            }
+
+            @Override public void onResponse(Call call, Response response) throws IOException {
+
+                ResponseBody responseBody = response.body();
+                try {
+                    JSONObject result = new JSONObject(responseBody.string());
+
+                    int success = result.getInt("success");
+                    final String msg = result.getString("message");
+
+                    if(success==1)
+                    {
+                        MainActivity.this.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+
+                                new LoadAllBuckets().execute(url_get_bucket + "?uid=" + Profile.getCurrentProfile().getId());
+                            }
+                        });
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        });
+    }
+
 }
