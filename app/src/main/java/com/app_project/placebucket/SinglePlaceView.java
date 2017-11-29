@@ -85,6 +85,8 @@ public class SinglePlaceView extends RelativeLayout {
         protected void onPreExecute() {
             // Display a temporary image to show while bitmap is loading.
             imgView.setImageResource(R.drawable.placedefault);
+            imgView.setColorFilter(Color.parseColor("#BDBDBD"), PorterDuff.Mode.MULTIPLY);
+
         }
 
         @Override
@@ -127,8 +129,6 @@ public class SinglePlaceView extends RelativeLayout {
 
                 // Photo has been loaded, display it.
                 imgView.setImageBitmap(attributedPhoto.bitmap);
-
-                imgView.setColorFilter(Color.parseColor("#BDBDBD"), PorterDuff.Mode.MULTIPLY);
 
                 // Display the attribution as HTML content if set.
                 if (attributedPhoto.attribution == null) {

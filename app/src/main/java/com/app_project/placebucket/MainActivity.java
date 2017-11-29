@@ -129,6 +129,29 @@ public class MainActivity extends AppCompatActivity{
                     new NavigationView.OnNavigationItemSelectedListener() {
                         @Override
                         public boolean onNavigationItemSelected(MenuItem menuItem) {
+
+                            int id = menuItem.getItemId();
+
+                            if (id == R.id.nav_share) {
+
+                                Intent msg = new Intent(Intent.ACTION_SEND);
+
+                                msg.addCategory(Intent.CATEGORY_DEFAULT);
+
+                                msg.putExtra(Intent.EXTRA_SUBJECT, "PlaceBucket!");
+
+                                msg.putExtra(Intent.EXTRA_TEXT, "같이쓰자 ㅎ");
+
+                                msg.putExtra(Intent.EXTRA_TITLE, "제목");
+
+                                msg.setType("text/plain");
+
+                                startActivity(Intent.createChooser(msg, "공유"));
+
+
+                            } else if (id == R.id.nav_send) {
+
+                            }
                             menuItem.setChecked(true);
                             mDrawerLayout.closeDrawers();
                             return true;

@@ -464,7 +464,7 @@ public class BucketActivity extends AppCompatActivity implements OnConnectionFai
 
                     switch (success) {
                         case 1:
-                            try{ pushNewPlace(Profile.getCurrentProfile().getId(), pname); } catch (Exception e) { e.printStackTrace(); }
+                          //  try{ pushNewPlace(Profile.getCurrentProfile().getId(), pname); } catch (Exception e) { e.printStackTrace(); }
 
                             new LoadAllPlaces().execute(url_get_place + "?bno=" + bucketNo);
                             break;
