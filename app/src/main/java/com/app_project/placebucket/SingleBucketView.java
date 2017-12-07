@@ -56,5 +56,7 @@ public class SingleBucketView extends RelativeLayout {
         nameView.setTextColor(Color.parseColor("#FFFFFF"));
     }
 
-
+    public ImageView getImgView() {
+        return imgView;
+    }
 }

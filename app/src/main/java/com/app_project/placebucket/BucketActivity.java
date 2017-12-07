@@ -1,40 +1,41 @@
 package com.app_project.placebucket;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.facebook.Profile;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.places.Place;
-import com.google.android.gms.location.places.PlacePhotoMetadata;
-import com.google.android.gms.location.places.PlacePhotoMetadataBuffer;
-import com.google.android.gms.location.places.PlacePhotoMetadataResult;
 import com.google.android.gms.location.places.Places;
 import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
 import com.google.android.gms.location.places.ui.PlacePicker;
@@ -44,17 +45,18 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 
 import okhttp3.Call;
 import okhttp3.Callback;
-import okhttp3.Headers;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -63,9 +65,11 @@ import okhttp3.ResponseBody;
 
 public class BucketActivity extends AppCompatActivity implements OnConnectionFailedListener {
 
+    private static final int PICK_FROM_ALBUM = 400;
     private final int REQUEST_CODE_ADD_PLACE = 301;
     private static final int REQUEST_PLACE_PICKER = 300;
 
+    String upLoadServerUri = "http://18.216.36.241/pb/upload.php";
 
     private static final String url_get_place = "http://18.216.36.241/pb/get_place.php";
     private String url_del_place = "http://18.216.36.241/pb/del_place.php";
@@ -93,6 +97,7 @@ public class BucketActivity extends AppCompatActivity implements OnConnectionFai
     ImageView backButton;
 
     GoogleApiClient mGoogleApiClient;
+    int serverResponseCode = 0;
 
     Boolean aBoolean;
 
@@ -106,6 +111,14 @@ public class BucketActivity extends AppCompatActivity implements OnConnectionFai
         bucketNameTextView = findViewById(R.id.bucket_title_name);
         plzAddPlace = findViewById(R.id.plzAddPlace);
         listView = findViewById(R.id.list_place);
+
+        bucketImageView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                checkPermissionToAccessAlbum();
+                return true;
+            }
+        });
 
         aBoolean = false;
 
@@ -152,6 +165,38 @@ public class BucketActivity extends AppCompatActivity implements OnConnectionFai
 
         new LoadAllPlaces().execute(url_get_place + "?bno=" + bucketNo);
 
+    }
+
+    public static void setImage(final ImageView imageView, String id) {
+
+        class GetImage extends AsyncTask<String, Void, Bitmap> {
+
+            @Override
+            protected Bitmap doInBackground(String... params) {
+                String id = params[0];
+                String add = "http://18.216.36.241/pb/uploads/" + id + ".jpg";
+                URL url = null;
+                Bitmap image = null;
+                try {
+                    url = new URL(add);
+                    image = BitmapFactory.decodeStream(url.openConnection().getInputStream());
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return image;
+            }
+
+            @Override
+            protected void onPostExecute(Bitmap b) {
+                super.onPostExecute(b);
+                imageView.setImageBitmap(b);
+            }
+        }
+
+        GetImage gi = new GetImage();
+        gi.execute(id);
     }
 
     class PlaceListAdapter extends BaseAdapter {
@@ -204,7 +249,6 @@ public class BucketActivity extends AppCompatActivity implements OnConnectionFai
             e.printStackTrace();
         }
     }
-
 
     class LoadAllPlaces extends AsyncTask<String, Void, String> {
 
@@ -311,7 +355,6 @@ public class BucketActivity extends AppCompatActivity implements OnConnectionFai
         }
 
     }
-
 
     protected  void viewPlaceMenuDialog(final int position) {
         CharSequence menu[] = new CharSequence[] {"장소를 삭제하시겠습니까?"};
@@ -426,15 +469,56 @@ public class BucketActivity extends AppCompatActivity implements OnConnectionFai
                 CharSequence pname = place.getName();
                 CharSequence paddress = place.getAddress();
 
-                try { addPlace(pid, pname, paddress); } catch (Exception e) { e.printStackTrace(); }
+                try {
+                    addPlace(pid, pname, paddress);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 // new AddPlaceActivity.CheckPlace().execute(url_check_place + "?pid=" + id+ "&bno=" + getIntent().getStringExtra("bno"));
 
                 // new LoadAllPlaces().execute(url_get_place + "?bno=" + bucketNo);
             }
-        }
-        else {
+        } else if (requestCode == PICK_FROM_ALBUM) {
+            Uri uri = data.getData();
+            Log.d("mytag", getRealPathFromURI(uri));
+
+            new uploadFile().execute(getRealPathFromURI(uri));
+        } else {
             super.onActivityResult(requestCode, resultCode, data);
         }
+    }
+
+    public void checkPermissionToAccessAlbum() {
+        int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
+        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+        } else {
+            doTakeAlbumAction();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case 1: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(this, "승인됨", Toast.LENGTH_LONG).show();
+                    doTakeAlbumAction();
+                } else {
+                    Toast.makeText(this, "거부됨", Toast.LENGTH_LONG).show();
+                }
+                return;
+            }
+        }    }
+
+    public String getRealPathFromURI(Uri contentUri) {
+        int column_index = 0;
+        String[] proj = {MediaStore.Images.Media.DATA};
+        Cursor cursor = getContentResolver().query(contentUri, proj, null, null, null);
+        if(cursor.moveToFirst()) {
+            column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+        }
+        return cursor.getString(column_index);
     }
 
     public void addPlace(String pid, final CharSequence pname, CharSequence paddress) throws Exception {
@@ -515,5 +599,130 @@ public class BucketActivity extends AppCompatActivity implements OnConnectionFai
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
+    }
+
+    public void doTakeAlbumAction() {
+
+        Intent intent = new Intent(Intent.ACTION_PICK);
+        intent.setType(MediaStore.Images.Media.CONTENT_TYPE);
+        startActivityForResult(intent, PICK_FROM_ALBUM);
+    }
+
+    public class uploadFile extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            if(!pDialog.isShowing()) {
+                pDialog = new ProgressDialog(BucketActivity.this);
+                pDialog.setMessage("사진 업로드 중입니다...");
+                pDialog.setIndeterminate(false);
+                pDialog.setCancelable(false);
+                pDialog.show();
+            }
+        }
+
+        @Override
+        protected String doInBackground(String... strings) {
+
+            String fileName = strings[0];
+
+            HttpURLConnection conn = null;
+            DataOutputStream dos = null;
+            String lineEnd = "\r\n";
+            String twoHyphens = "--";
+            String boundary = "*****";
+            int bytesRead, bytesAvailable, bufferSize;
+            byte[] buffer;
+            int maxBufferSize = 1 * 1024 * 1024;
+            File sourceFile = new File(strings[0]);
+
+            if (!sourceFile.isFile()) {
+                Log.e("uploadFile", "Source File not exist :");
+                return null;
+            } else {
+
+                try {
+                    // open a URL connection to the Servlet
+                    FileInputStream fileInputStream = new FileInputStream(sourceFile);
+                    URL url = new URL(upLoadServerUri);
+
+                    // Open a HTTP  connection to  the URL
+                    conn = (HttpURLConnection) url.openConnection();
+                    conn.setDoInput(true); // Allow Inputs
+                    conn.setDoOutput(true); // Allow Outputs
+                    conn.setUseCaches(false); // Don't use a Cached Copy
+                    conn.setRequestMethod("POST");
+                    conn.setRequestProperty("Connection", "Keep-Alive");
+                    conn.setRequestProperty("ENCTYPE", "multipart/form-data");
+                    conn.setRequestProperty("Content-Type", "multipart/form-data;boundary=" + boundary);
+                    conn.setRequestProperty("uploaded_file", fileName);
+
+                    dos = new DataOutputStream(conn.getOutputStream());
+
+                    dos.writeBytes(twoHyphens + boundary + lineEnd);
+                    dos.writeBytes("Content-Disposition: form-data; name=\"uploaded_file\";filename=\""
+                            + bucketNo + ".jpg" + "\"" + lineEnd);
+
+                    dos.writeBytes(lineEnd);
+
+                    // create a buffer of  maximum size
+                    bytesAvailable = fileInputStream.available();
+
+                    bufferSize = Math.min(bytesAvailable, maxBufferSize);
+                    buffer = new byte[bufferSize];
+
+                    // read file and write it into form...
+                    bytesRead = fileInputStream.read(buffer, 0, bufferSize);
+
+                    while (bytesRead > 0) {
+
+                        dos.write(buffer, 0, bufferSize);
+                        bytesAvailable = fileInputStream.available();
+                        bufferSize = Math.min(bytesAvailable, maxBufferSize);
+                        bytesRead = fileInputStream.read(buffer, 0, bufferSize);
+
+                    }
+
+                    // send multipart form data necesssary after file data...
+                    dos.writeBytes(lineEnd);
+                    dos.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
+
+                    // Responses from the server (code and message)
+                    serverResponseCode = conn.getResponseCode();
+                    String serverResponseMessage = conn.getResponseMessage();
+
+                    Log.i("mytag", "HTTP Respdonse is : "
+                            + serverResponseMessage + ": " + serverResponseCode);
+
+                    if(serverResponseCode == 200){
+                        Log.e("mytag", "success " + fileName);
+                    }
+
+                    //close the streams
+                    fileInputStream.close();
+                    dos.flush();
+                    dos.close();
+
+                } catch (Exception e) {
+
+                    e.printStackTrace();
+                    Log.e("mytag", "Exception : "+ e.getMessage(), e);
+                }
+
+            } // End else block
+
+            return String.valueOf(serverResponseCode);
+
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+
+            pDialog.dismiss();
+
+            setImage(bucketImageView, bucketNo);
+        }
     }
 }
