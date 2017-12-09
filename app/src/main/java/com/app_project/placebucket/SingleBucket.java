@@ -1,20 +1,22 @@
 package com.app_project.placebucket;
 
+import android.graphics.Bitmap;
+
 public class SingleBucket {
 
     private String no;
     private String name;
-    private int imgId;
+    private Bitmap bitmap;
 
     public SingleBucket(String no, String name) {
         this.no = no;
         this.name = name;
     }
 
-    public SingleBucket(String no, String name, int imgId) {
+    public SingleBucket(String no, String name, Bitmap bitmap) {
         this.no = no;
         this.name = name;
-        this.imgId = imgId;
+        this.bitmap = bitmap;
     }
 
     public String getNo() {
@@ -33,10 +35,10 @@ public class SingleBucket {
         this.name = name;
     }
 
-    public int getImgId() { return imgId; }
+    public Bitmap getImage() { return bitmap; }
 
-    public void setImgId(int imgId) {
-        this.imgId = imgId;
+    public void setImage(Bitmap bitmap) {
+        this.bitmap = bitmap;
     }
 
 }

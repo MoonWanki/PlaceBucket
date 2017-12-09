@@ -154,7 +154,7 @@ public class SinglePlaceView extends RelativeLayout {
         }
     }
 
-    public Bitmap scaleCenterCrop(Bitmap source, int newHeight, int newWidth) {
+    public static Bitmap scaleCenterCrop(Bitmap source, int newHeight, int newWidth) {
         int sourceWidth = source.getWidth();
         int sourceHeight = source.getHeight();
 

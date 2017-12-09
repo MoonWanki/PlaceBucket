@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
@@ -260,10 +261,11 @@ public class MainActivity extends AppCompatActivity{
             SingleBucket item = items.get(i);
             view.setBnoView(item.getNo());
             view.setBnameView(item.getName());
-            view.setBgImgView(item.getImgId());
+            view.setBgImgView(item.getImage());
 
             return view;
         }
+
     }
 
     class LoadAllBuckets extends AsyncTask<String, Void, String> {
@@ -332,16 +334,37 @@ public class MainActivity extends AppCompatActivity{
                         JSONArray jsonArray = jsonObject.getJSONArray(TAG_BUCKETS);
                         // updating UI from Background Thread
 
+                        ArrayList<String> nos = new ArrayList<>();
+
                         for (int i = 0; i < jsonArray.length(); i++) {
                             JSONObject j = jsonArray.getJSONObject(i);
                             String bno = j.getString(TAG_BNO);
                             String bname = j.getString(TAG_BNAME);
 
+                            nos.add(bno); // for putting into GetImage thread
+
                             SingleBucket b = new SingleBucket(bno, bname);
-
                             bucketArray.add(b);
+                        }
 
-                            bucketArray.get(i).setImgId(R.drawable.bucketdefault);
+                        GetImages gi = new GetImages();
+                        gi.setNos(nos);
+                        Log.d("mytag:nos", nos.get(0));
+                        Thread thread = new Thread(gi);
+                        thread.start();
+                        thread.join();
+                        ArrayList<Bitmap> images = gi.getImages();
+                        Log.d("mytag:images num", String.valueOf(images.size()));
+
+                        for(int i=0 ; i<images.size() ; i++) {
+                            Bitmap b = gi.getBitmap(i);
+                            if(b==null) {
+                                Log.d("mytag", "null");
+
+                            } else {
+                                Log.d("mytag:images num", b.toString());
+                                bucketArray.get(i).setImage(b);
+                            }
                         }
 
                         adapter = new BucketListAdapter();
@@ -356,7 +379,6 @@ public class MainActivity extends AppCompatActivity{
                                 Intent intent = new Intent(getApplicationContext(), BucketActivity.class);
                                 intent.putExtra(TAG_BNO, b.getNo());
                                 intent.putExtra(TAG_BNAME, b.getName());
-                                intent.putExtra(TAG_IMG, b.getImgId());
                                 startActivityForResult(intent, REQUEST_CODE_BUCKET);
                             }
 
@@ -373,7 +395,7 @@ public class MainActivity extends AppCompatActivity{
                         });
                     }
 
-                } catch (JSONException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             } else {

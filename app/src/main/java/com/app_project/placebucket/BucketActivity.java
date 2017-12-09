@@ -48,7 +48,9 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -101,6 +103,39 @@ public class BucketActivity extends AppCompatActivity implements OnConnectionFai
 
     Boolean aBoolean;
 
+    class SetBucketTitleImg extends AsyncTask<Void, Void, Bitmap> {
+
+        @Override
+        protected Bitmap doInBackground(Void... voids) {
+
+            Bitmap b = null;
+
+            try {
+                Log.i("mytag", "접속");
+                String add = "http://18.216.36.241/pb/uploads/" + bucketNo + ".jpg";
+                String def = "http://18.216.36.241/pb/uploads/default.jpg";
+                URL url = null;
+                url = new URL(add);
+                try {
+                    b = BitmapFactory.decodeStream(url.openConnection().getInputStream());
+                }catch (FileNotFoundException e) {
+                    url = new URL(def);
+                    b = BitmapFactory.decodeStream(url.openConnection().getInputStream());
+                }
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return b;
+        }
+
+        @Override
+        protected void onPostExecute(Bitmap bitmap) {
+            bucketImageView.setImageBitmap(bitmap);
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -108,6 +143,7 @@ public class BucketActivity extends AppCompatActivity implements OnConnectionFai
         setContentView(R.layout.activity_bucket);
 
         bucketImageView = findViewById(R.id.bucket_title_img);
+
         bucketNameTextView = findViewById(R.id.bucket_title_name);
         plzAddPlace = findViewById(R.id.plzAddPlace);
         listView = findViewById(R.id.list_place);
@@ -163,11 +199,13 @@ public class BucketActivity extends AppCompatActivity implements OnConnectionFai
 
         bucketNameTextView.setText(bucketName);
 
+        new SetBucketTitleImg().execute();
+
         new LoadAllPlaces().execute(url_get_place + "?bno=" + bucketNo);
 
     }
 
-    public static void setImage(final ImageView imageView, String id) {
+    /* public static void setImage(final ImageView imageView, String id) {
 
         class GetImage extends AsyncTask<String, Void, Bitmap> {
 
@@ -197,7 +235,7 @@ public class BucketActivity extends AppCompatActivity implements OnConnectionFai
 
         GetImage gi = new GetImage();
         gi.execute(id);
-    }
+    }*/
 
     class PlaceListAdapter extends BaseAdapter {
 
@@ -722,7 +760,7 @@ public class BucketActivity extends AppCompatActivity implements OnConnectionFai
 
             pDialog.dismiss();
 
-            setImage(bucketImageView, bucketNo);
+            new SetBucketTitleImg().execute();
         }
     }
 }
