@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <item android:title="문완기 x 박은수" />
+    <item android:title="PlaceBucket Christmas Edition" />
     <item android:title="Communicate">
         <menu>
             <item
