@@ -44,6 +44,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.GlideContext;
 import com.facebook.AccessToken;
 import com.facebook.Profile;
 import com.facebook.login.LoginManager;
@@ -263,6 +265,9 @@ public class MainActivity extends AppCompatActivity{
             view.setBnameView(item.getName());
             view.setBgImgView(item.getImage());
 
+            //Glide.with(getApplicationContext()).clear(view);
+            //Glide.with(getApplicationContext()).load("http://18.216.36.241/pb/uploads/"+item.getNo()+".jpg").into(view.getImgView());
+
             return view;
         }
 
@@ -347,6 +352,7 @@ public class MainActivity extends AppCompatActivity{
                             bucketArray.add(b);
                         }
 
+
                         GetImages gi = new GetImages();
                         gi.setNos(nos);
                         Log.d("mytag:nos", nos.get(0));
@@ -367,7 +373,9 @@ public class MainActivity extends AppCompatActivity{
                             }
                         }
 
+
                         adapter = new BucketListAdapter();
+
                         adapter.setList(bucketArray);
 
                         listView.setAdapter(adapter);
@@ -467,6 +475,8 @@ public class MainActivity extends AppCompatActivity{
             if (resultCode == Activity.RESULT_OK) {
                 new LoadAllBuckets().execute(url_get_bucket + "?uid=" + Profile.getCurrentProfile().getId());
             }
+        } else if(requestCode==REQUEST_CODE_BUCKET) {
+            new LoadAllBuckets().execute(url_get_bucket + "?uid=" + Profile.getCurrentProfile().getId());
         }
     }
 

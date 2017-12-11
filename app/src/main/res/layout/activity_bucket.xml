@@ -39,12 +39,13 @@
 
             <ImageView
                 android:id="@+id/set_bucket"
+                android:src="@drawable/settingicon"
                 android:layout_width="30dp"
                 android:layout_height="30dp"
                 android:layout_gravity="right"
                 android:layout_marginRight="15dp"
                 android:layout_marginTop="15dp"
-                android:src="@drawable/addmembericon"/>
+                />
 
             <TextView
                 android:id="@+id/bucket_title_name"

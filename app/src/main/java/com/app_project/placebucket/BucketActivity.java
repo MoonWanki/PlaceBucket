@@ -22,10 +22,12 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -97,6 +99,7 @@ public class BucketActivity extends AppCompatActivity implements OnConnectionFai
     ListView listView;
     PlaceListAdapter adapter;
     ImageView backButton;
+    ImageView settingButton;
 
     GoogleApiClient mGoogleApiClient;
     int serverResponseCode = 0;
@@ -147,14 +150,7 @@ public class BucketActivity extends AppCompatActivity implements OnConnectionFai
         bucketNameTextView = findViewById(R.id.bucket_title_name);
         plzAddPlace = findViewById(R.id.plzAddPlace);
         listView = findViewById(R.id.list_place);
-
-        bucketImageView.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                checkPermissionToAccessAlbum();
-                return true;
-            }
-        });
+        settingButton = findViewById(R.id.set_bucket);
 
         aBoolean = false;
 
@@ -164,6 +160,13 @@ public class BucketActivity extends AppCompatActivity implements OnConnectionFai
                 .addApi(Places.PLACE_DETECTION_API)
                 .enableAutoManage(this, this)
                 .build();
+
+        settingButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                viewBucketSettingDialog();
+            }
+        });
 
 
         FloatingActionButton fab = findViewById(R.id.fab_bucket);
@@ -236,6 +239,93 @@ public class BucketActivity extends AppCompatActivity implements OnConnectionFai
         GetImage gi = new GetImage();
         gi.execute(id);
     }*/
+
+    protected void viewBucketSettingDialog() {
+        CharSequence menu[] = new CharSequence[] {"배경 사진 설정", "버킷 이름 편집", "멤버 초대"};
+
+        android.support.v7.app.AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(this);
+        builder.setTitle(bucketName);
+        builder.setItems(menu, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+                switch(which) {
+                    case 0:
+                        checkPermissionToAccessAlbum();
+                        break;
+                    case 1:
+                        viewBucketNameEditor();
+                        break;
+                    default:
+                        break;
+                }
+            }
+        });
+        builder.show();
+    }
+
+    private void viewBucketNameEditor() {
+        LayoutInflater layoutInflaterAndroid = LayoutInflater.from(this);
+        View mView = layoutInflaterAndroid.inflate(R.layout.input_dialog, null);
+        AlertDialog.Builder alertDialogBuilderUserInput = new AlertDialog.Builder(this);
+        alertDialogBuilderUserInput.setView(mView);
+
+        final EditText userInputDialogEditText = mView.findViewById(R.id.userInputDialog);
+        userInputDialogEditText.setText(bucketName);
+        alertDialogBuilderUserInput
+                .setCancelable(false)
+                .setPositiveButton("완료", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialogBox, int id) {
+                        updateBucketName(userInputDialogEditText.getText().toString());
+                    }
+                })
+
+                .setNegativeButton("취소",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialogBox, int id) {
+                                dialogBox.cancel();
+                            }
+                        });
+
+        AlertDialog alertDialogAndroid = alertDialogBuilderUserInput.create();
+        alertDialogAndroid.show();
+    }
+
+    private void updateBucketName(final String name) {
+
+        Request request = new Request.Builder()
+                .url("http://18.216.36.241/pb/set_bucket_name.php?name=" + name
+                        + "&bno=" + bucketNo).build();
+
+        OkHttpClient client = new OkHttpClient();
+        client.newCall(request).enqueue(new Callback() {
+
+            @Override public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+            }
+
+            @Override public void onResponse(Call call, Response response) throws IOException {
+
+                ResponseBody responseBody = response.body();
+
+                try {
+                    JSONObject result = new JSONObject(responseBody.string());
+                    if(result.getInt("success")==1) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                bucketNameTextView.setText(name);
+                            }
+                        });
+                    }
+
+                } catch (JSONException e) { e.printStackTrace(); }
+
+
+            }
+        });
+
+    }
 
     class PlaceListAdapter extends BaseAdapter {
 
