@@ -256,6 +256,9 @@ public class BucketActivity extends AppCompatActivity implements OnConnectionFai
                     case 1:
                         viewBucketNameEditor();
                         break;
+                    case 2:
+
+                        break;
                     default:
                         break;
                 }

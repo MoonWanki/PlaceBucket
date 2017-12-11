@@ -138,17 +138,11 @@ public class MainActivity extends AppCompatActivity{
                             if (id == R.id.nav_share) {
 
                                 Intent msg = new Intent(Intent.ACTION_SEND);
-
                                 msg.addCategory(Intent.CATEGORY_DEFAULT);
-
-                                msg.putExtra(Intent.EXTRA_SUBJECT, "PlaceBucket!");
-
-                                msg.putExtra(Intent.EXTRA_TEXT, "같이쓰자 ㅎ");
-
+                                msg.putExtra(Intent.EXTRA_SUBJECT, "플레이스버킷");
+                                msg.putExtra(Intent.EXTRA_TEXT, "우리들만의 장소 버킷리스트\nhttps://drive.google.com/open?id=1F42GaIRCSYA94GW2RdCUDJtYM3oZW1wq");
                                 msg.putExtra(Intent.EXTRA_TITLE, "제목");
-
                                 msg.setType("text/plain");
-
                                 startActivity(Intent.createChooser(msg, "공유"));
 
 
