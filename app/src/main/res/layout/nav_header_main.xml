@@ -24,13 +24,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingTop="@dimen/nav_header_vertical_spacing"
-        android:text="Welcome to PlaceBucket"
+        android:text="Merry Christmas!!"
         android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
 
     <TextView
         android:id="@+id/textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="'우리들만의 장소 버킷리스트, 플레이스버킷'"  />
+        android:text="'크리스마스엔 역시, 플레이스버킷'"  />
 
 </LinearLayout>
