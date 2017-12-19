@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -35,6 +36,7 @@ public class LoginActivity extends AppCompatActivity {
     private final int REQUEST_CODE_MAIN = 100;
     CallbackManager callbackManager;
     LoginButton FBLoginButton;
+    boolean checkingUser = false;
 
 
     private ProgressDialog pDialog;
@@ -47,11 +49,13 @@ public class LoginActivity extends AppCompatActivity {
         FBLoginButton = findViewById(R.id.fb_login_button);
         FBLoginButton.setReadPermissions(Arrays.asList("user_friends"));
         callbackManager = CallbackManager.Factory.create();
+        pDialog = new ProgressDialog(LoginActivity.this);
 
 
         // 이미 로그인 돼 있는 상태면 바로 메인액티비티로
         if(Profile.getCurrentProfile()!=null) {
             Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+            Log.d("mytag", "이미로그인 액티비티띄움");
             startActivityForResult(intent, REQUEST_CODE_MAIN);
         }
 
@@ -61,7 +65,11 @@ public class LoginActivity extends AppCompatActivity {
             protected void onCurrentProfileChanged(Profile oldProfile, Profile currentProfile) {
                 if(oldProfile==null && currentProfile!=null) {
 
-                    new CheckUser().execute(url_check_user + "?id=" + currentProfile.getId());
+                    if(!checkingUser) {
+                        checkingUser = true;
+                        new CheckUser().execute(url_check_user + "?id=" + currentProfile.getId());
+
+                    }
 
                 }
             }
@@ -89,11 +97,13 @@ public class LoginActivity extends AppCompatActivity {
         protected void onPreExecute() {
             super.onPreExecute();
 
-            pDialog = new ProgressDialog(LoginActivity.this);
-            pDialog.setMessage("유저 정보를 확인 중입니다...");
-            pDialog.setIndeterminate(false);
-            pDialog.setCancelable(false);
-            pDialog.show();
+            if(!LoginActivity.this.isFinishing()) {
+
+                pDialog.setMessage("유저 정보를 확인 중입니다...");
+                pDialog.setIndeterminate(false);
+                pDialog.setCancelable(false);
+                pDialog.show();
+            }
         }
 
         @Override
@@ -125,7 +135,11 @@ public class LoginActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(String result) {
 
-            pDialog.dismiss();
+            if(pDialog.isShowing()) {
+                pDialog.dismiss();
+            }
+
+            checkingUser = false;
 
             if(result!=null) {
 
@@ -137,6 +151,7 @@ public class LoginActivity extends AppCompatActivity {
                         // Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_LONG).show();
 
                         Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                        Log.d("mytag", "있는 유저이므로 액티비티 띄움");
                         startActivityForResult(intent, REQUEST_CODE_MAIN);
 
                     } else if (success == 0) {
@@ -165,7 +180,6 @@ public class LoginActivity extends AppCompatActivity {
         protected void onPreExecute() {
             super.onPreExecute();
 
-            pDialog = new ProgressDialog(LoginActivity.this);
             pDialog.setMessage("유저 정보를 등록중입니다...");
             pDialog.setIndeterminate(false);
             pDialog.setCancelable(false);
@@ -201,7 +215,9 @@ public class LoginActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(String result) {
 
-            pDialog.dismiss();
+            if(pDialog.isShowing()) {
+                pDialog.dismiss();
+            }
 
             if(result!=null) {
 
@@ -213,6 +229,8 @@ public class LoginActivity extends AppCompatActivity {
                         // Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_LONG).show();
 
                         Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                        Log.d("mytag", "새로운유저추가후 액티비티 띄움");
+
                         startActivityForResult(intent, REQUEST_CODE_MAIN);
 
                     } else if (success == 0) {

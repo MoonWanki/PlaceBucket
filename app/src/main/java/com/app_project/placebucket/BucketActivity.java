@@ -33,6 +33,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.facebook.Profile;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.common.GooglePlayServicesRepairableException;
@@ -88,11 +89,13 @@ public class BucketActivity extends AppCompatActivity implements OnConnectionFai
     ImageView bucketImageView;
     TextView bucketNameTextView;
     TextView plzAddPlace;
+    TextView bucketMembersView;
 
     private ProgressDialog pDialog;
 
     private JSONObject jsonObject;
     private JSONArray jsonArray;
+    private JSONArray members;
 
     private ArrayList<SinglePlace> placeArray;
 
@@ -148,11 +151,13 @@ public class BucketActivity extends AppCompatActivity implements OnConnectionFai
         bucketImageView = findViewById(R.id.bucket_title_img);
 
         bucketNameTextView = findViewById(R.id.bucket_title_name);
+        bucketMembersView = findViewById(R.id.bucket_title_members);
         plzAddPlace = findViewById(R.id.plzAddPlace);
         listView = findViewById(R.id.list_place);
         settingButton = findViewById(R.id.set_bucket);
 
         aBoolean = false;
+        members = new JSONArray();
 
         mGoogleApiClient = new GoogleApiClient
                 .Builder(this)
@@ -204,7 +209,61 @@ public class BucketActivity extends AppCompatActivity implements OnConnectionFai
 
         new SetBucketTitleImg().execute();
 
+        setBucketMembersView();
+
         new LoadAllPlaces().execute(url_get_place + "?bno=" + bucketNo);
+
+    }
+
+    private void setBucketMembersView() {
+
+        OkHttpClient okHttpClient = new OkHttpClient();
+        Request request = new Request.Builder().url("http://18.216.36.241/pb/get_member.php?bno=" + bucketNo).build();
+
+        okHttpClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) { e.printStackTrace(); }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+
+                try {
+                    String result = response.body().string();
+
+                    JSONObject jo = new JSONObject(result);
+
+                    if(jo.getInt("success")==1) {
+                        JSONArray temp = jo.getJSONArray("user");
+                        for(int i=0 ; i<temp.length() ; i++) {
+                            if(!temp.getJSONObject(i).getString("id").equals(Profile.getCurrentProfile().getId())) {
+                                members.put(temp.getJSONObject(i));
+                                Log.d("mytag", temp.getJSONObject(i).toString());
+                            }
+                        }
+                    }
+
+                    String names = "with ";
+                    for(int i=0; i<members.length() ; i++) {
+                        names += members.getJSONObject(i).getString("name");
+                        if(i<members.length()-1) {
+                            names += ", ";
+                        }
+                    }
+
+                    final String f = names;
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            bucketMembersView.setText(f);
+                        }
+                    });
+
+
+                } catch (Exception e ) { e.printStackTrace(); }
+
+
+            }
+        });
 
     }
 
@@ -257,6 +316,7 @@ public class BucketActivity extends AppCompatActivity implements OnConnectionFai
                         viewBucketNameEditor();
                         break;
                     case 2:
+                        Toast.makeText(getApplicationContext(), "지원하지 않는 기능입니다.", Toast.LENGTH_SHORT).show();
 
                         break;
                     default:
@@ -679,7 +739,11 @@ public class BucketActivity extends AppCompatActivity implements OnConnectionFai
 
                     switch (success) {
                         case 1:
-                          //  try{ pushNewPlace(Profile.getCurrentProfile().getId(), pname); } catch (Exception e) { e.printStackTrace(); }
+                            try{
+                                for(int i=0 ; i<members.length() ; i++) {
+                                    pushNewPlace(members.getJSONObject(i).getString("id"), pname);
+                                }
+                            } catch (Exception e) { e.printStackTrace(); }
 
                             new LoadAllPlaces().execute(url_get_place + "?bno=" + bucketNo);
                             break;

@@ -2,6 +2,7 @@ package com.app_project.placebucket;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -57,6 +58,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Map;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -103,11 +105,17 @@ public class MainActivity extends AppCompatActivity{
     private static final String TAG = "MyTag";
 
 
+    String userName;
+    String userId;
+    int temp=0;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        userName = Profile.getCurrentProfile().getName();
+        userId = Profile.getCurrentProfile().getId();
 
            toolbar=findViewById(R.id.toolbar);
         {
@@ -163,8 +171,6 @@ public class MainActivity extends AppCompatActivity{
         floatingActionButton = findViewById(R.id.fab_main);
         listView = findViewById(R.id.list_bucket);
 
-        String name = Profile.getCurrentProfile().getName();
-        String id = Profile.getCurrentProfile().getId();
 
        /* logoutButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -190,13 +196,26 @@ public class MainActivity extends AppCompatActivity{
         swipeBucket.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                new LoadAllBuckets().execute(url_get_bucket + "?uid=" + Profile.getCurrentProfile().getId());
+                new LoadAllBuckets().execute(url_get_bucket + "?uid=" + userId);
             }
         });
 
-        new LoadAllBuckets().execute(url_get_bucket + "?uid=" + Profile.getCurrentProfile().getId());
 
-        try { setToken(Profile.getCurrentProfile().getId(), FirebaseInstanceId.getInstance().getToken()); } catch (Exception e) { e.printStackTrace(); }
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                SingleBucket b = (SingleBucket) adapter.getItem(i);
+                Intent intent = new Intent(getApplicationContext(), BucketActivity.class);
+                intent.putExtra(TAG_BNO, b.getNo());
+                intent.putExtra(TAG_BNAME, b.getName());
+                startActivityForResult(intent, REQUEST_CODE_BUCKET);
+            }
+
+        });
+
+        new LoadAllBuckets().execute(url_get_bucket + "?uid=" + userId);
+
+        try { setToken(userId, FirebaseInstanceId.getInstance().getToken()); } catch (Exception e) { e.printStackTrace(); }
 
     }
 
@@ -259,10 +278,90 @@ public class MainActivity extends AppCompatActivity{
             view.setBnameView(item.getName());
             view.setBgImgView(item.getImage());
 
-            //Glide.with(getApplicationContext()).clear(view);
-            //Glide.with(getApplicationContext()).load("http://18.216.36.241/pb/uploads/"+item.getNo()+".jpg").into(view.getImgView());
-
             return view;
+        }
+
+    }
+
+    public void loadAllBuckets() {
+        Request request = new Request.Builder()
+                .url("http://18.216.36.241/pb/get_all_buckets.php?uid=" + userId).build();
+
+        OkHttpClient client = new OkHttpClient();
+        client.newCall(request).enqueue(new Callback() {
+
+            @Override public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+            }
+
+            @Override public void onResponse(Call call, Response response) throws IOException {
+
+                String result = response.body().string();
+
+                try {
+
+                    JSONObject jsonObject = new JSONObject(result);
+                    JSONArray jsonArray = jsonObject.getJSONArray("buckets");
+
+                    bucketArray = new ArrayList<>();
+
+                    for(int i=0 ; i<jsonArray.length() ; i++) {
+
+                        JSONObject j = jsonArray.getJSONObject(i);
+                        SingleBucket singleBucket = new SingleBucket(j.getString("Bno"), j.getString("Bname"));
+                        bucketArray.add(singleBucket);
+                    }
+
+                    loadBucketMembers();
+
+                } catch (Exception e) { e.printStackTrace(); }
+
+                /*
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+
+                        adapter = new BucketListAdapter();
+                        adapter.setList(bucketArray);
+                        listView.setAdapter(adapter);
+                    }
+                });
+                */
+
+
+            }
+        });
+    }
+
+    private void loadBucketMembers() {
+
+        temp = bucketArray.size();
+        final ArrayList<JSONArray> members = new ArrayList<>();
+
+        for(int i=0 ; i<temp ; i++) {
+
+            Request request = new Request.Builder()
+                    .url("http://18.216.36.241/pb/get_members.php?bno=" + bucketArray.get(i).getNo()).build();
+
+            OkHttpClient client = new OkHttpClient();
+            client.newCall(request).enqueue(new Callback() {
+
+                @Override public void onFailure(Call call, IOException e) {
+                    e.printStackTrace();
+                }
+
+                @Override public void onResponse(Call call, Response response) throws IOException {
+
+                    String result = response.body().string();
+
+                    try {
+                        JSONObject jsonObject = new JSONObject(result);
+                        members.add(jsonObject.getJSONArray("user"));
+
+                    } catch(Exception e) { e.printStackTrace(); }
+
+                }
+            });
         }
 
     }
@@ -311,16 +410,12 @@ public class MainActivity extends AppCompatActivity{
 
         protected void onPostExecute(String result) {
 
-            pDialog.dismiss();
 
             if(result!=null) {
-
                 try {
 
                     bucketArray = new ArrayList<>();
-
                     JSONObject jsonObject = new JSONObject(result);
-
                     int success = jsonObject.getInt(TAG_SUCCESS);
 
                     if (success == 0) {
@@ -333,7 +428,7 @@ public class MainActivity extends AppCompatActivity{
                         JSONArray jsonArray = jsonObject.getJSONArray(TAG_BUCKETS);
                         // updating UI from Background Thread
 
-                        ArrayList<String> nos = new ArrayList<>();
+                        ArrayList<String> nos  = new ArrayList<>();
 
                         for (int i = 0; i < jsonArray.length(); i++) {
                             JSONObject j = jsonArray.getJSONObject(i);
@@ -372,6 +467,8 @@ public class MainActivity extends AppCompatActivity{
 
                         adapter.setList(bucketArray);
 
+                        pDialog.dismiss();
+
                         listView.setAdapter(adapter);
 
                         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -383,7 +480,6 @@ public class MainActivity extends AppCompatActivity{
                                 intent.putExtra(TAG_BNAME, b.getName());
                                 startActivityForResult(intent, REQUEST_CODE_BUCKET);
                             }
-
 
                         });
 
@@ -467,10 +563,10 @@ public class MainActivity extends AppCompatActivity{
 
         if(requestCode==REQUEST_CODE_ADD_BUCKET) {
             if (resultCode == Activity.RESULT_OK) {
-                new LoadAllBuckets().execute(url_get_bucket + "?uid=" + Profile.getCurrentProfile().getId());
+                new LoadAllBuckets().execute(url_get_bucket + "?uid=" + userId);
             }
         } else if(requestCode==REQUEST_CODE_BUCKET) {
-            new LoadAllBuckets().execute(url_get_bucket + "?uid=" + Profile.getCurrentProfile().getId());
+            new LoadAllBuckets().execute(url_get_bucket + "?uid=" + userId);
         }
     }
 
@@ -518,7 +614,7 @@ public class MainActivity extends AppCompatActivity{
     }
     public void delBucket(String bno) throws Exception {
         Request request = new Request.Builder()
-                .url("http://18.216.36.241/pb/set_member.php?mode=del&id="+Profile.getCurrentProfile().getId()+"&bno="+bno).build();
+                .url("http://18.216.36.241/pb/set_member.php?mode=del&id="+userId+"&bno="+bno).build();
 
         OkHttpClient client = new OkHttpClient();
 
@@ -543,7 +639,7 @@ public class MainActivity extends AppCompatActivity{
                             @Override
                             public void run() {
 
-                                new LoadAllBuckets().execute(url_get_bucket + "?uid=" + Profile.getCurrentProfile().getId());
+                                new LoadAllBuckets().execute(url_get_bucket + "?uid=" + userId);
                             }
                         });
                     }

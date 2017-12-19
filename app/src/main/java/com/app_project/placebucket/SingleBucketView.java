@@ -37,7 +37,7 @@ public class SingleBucketView extends RelativeLayout {
         inflater.inflate(R.layout.single_bucket, this, true);
 
         imgView = (ImageView) findViewById(R.id.img_bucket);
-        noView = (TextView) findViewById(R.id.bucket_no);
+        // noView = (TextView) findViewById(R.id.bucket_no);
         nameView = (TextView) findViewById(R.id.bucket_name);
     }
 
@@ -51,7 +51,7 @@ public class SingleBucketView extends RelativeLayout {
 
 
     public void setBnoView(String no) {
-        noView.setText(no);
+        // noView.setText(no);
     }
 
     public void setBnameView(String name) {

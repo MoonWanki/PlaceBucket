@@ -57,6 +57,17 @@
                 android:textColor="#FFFFFF"
             />
 
+            <TextView
+                android:id="@+id/bucket_title_members"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                android:text="정보를 불러오는 중입니다..."
+                android:layout_gravity="center_horizontal|bottom"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                />
+
         </android.support.design.widget.CollapsingToolbarLayout>
 
     </android.support.design.widget.AppBarLayout>

@@ -2,11 +2,16 @@ package com.app_project.placebucket;
 
 import android.graphics.Bitmap;
 
+import org.json.JSONArray;
+
+import java.util.ArrayList;
+
 public class SingleBucket {
 
     private String no;
     private String name;
     private Bitmap bitmap;
+    private JSONArray members;
 
     public SingleBucket(String no, String name) {
         this.no = no;
@@ -18,6 +23,12 @@ public class SingleBucket {
         this.name = name;
         this.bitmap = bitmap;
     }
+
+    public void setMembers(JSONArray jsonArray){
+        members = jsonArray;
+    }
+
+    public JSONArray getMembers() { return members; }
 
     public String getNo() {
         return no;
