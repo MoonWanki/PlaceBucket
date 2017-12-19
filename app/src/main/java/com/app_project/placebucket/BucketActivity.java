@@ -316,7 +316,7 @@ public class BucketActivity extends AppCompatActivity implements OnConnectionFai
                         viewBucketNameEditor();
                         break;
                     case 2:
-                        Toast.makeText(getApplicationContext(), "지원하지 않는 기능입니다.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getApplicationContext(), "준비 중입니다.", Toast.LENGTH_SHORT).show();
 
                         break;
                     default:
@@ -499,7 +499,6 @@ public class BucketActivity extends AppCompatActivity implements OnConnectionFai
 
                 if(jsonObject.getInt(TAG_SUCCESS)==0) {
                     plzAddPlace.setText("장소를 추가하세요.");
-                    Toast.makeText(getApplicationContext(), jsonObject.getString("message"),Toast.LENGTH_LONG).show();
                     return;
                 }
 
@@ -619,14 +618,11 @@ public class BucketActivity extends AppCompatActivity implements OnConnectionFai
                     int success = jsonObject.getInt(MainActivity.TAG_SUCCESS);
 
                     if (success == 1) {
-                        Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_LONG).show();
                         recreate();
 
 
                     } else if (success == 0) {
-                        // Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_LONG).show();
-                        Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_SHORT).show();
-                        // Toast.makeText(getApplicationContext(),Profile.getCurrentProfile().getId(), Toast.LENGTH_LONG).show();
+
 
 
                     } else if (success == -1) {
@@ -693,10 +689,8 @@ public class BucketActivity extends AppCompatActivity implements OnConnectionFai
         switch (requestCode) {
             case 1: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Toast.makeText(this, "승인됨", Toast.LENGTH_LONG).show();
                     doTakeAlbumAction();
                 } else {
-                    Toast.makeText(this, "거부됨", Toast.LENGTH_LONG).show();
                 }
                 return;
             }

@@ -261,7 +261,6 @@ public class AddBucketActivity extends AppCompatActivity {
                     int success = jsonObject.getInt(MainActivity.TAG_SUCCESS);
 
                     if (success == 1) {
-                        Toast.makeText(getApplicationContext(), jsonObject.getString("message"), Toast.LENGTH_SHORT).show();
                         new GetNewBucket().execute(url_get_latest_bucket);
 
                     } else if (success == -1) {

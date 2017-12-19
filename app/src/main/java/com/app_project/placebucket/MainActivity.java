@@ -607,7 +607,7 @@ public class MainActivity extends AppCompatActivity{
                 viewLogoutDialog();
                 return true;
             case R.id.settings:
-                Toast.makeText(getApplicationContext(), "힝 속았징", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "준비 중입니다.", Toast.LENGTH_SHORT).show();
                 return true;
         }
         return super.onOptionsItemSelected(item);
